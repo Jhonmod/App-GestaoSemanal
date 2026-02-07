@@ -469,7 +469,7 @@ function App() {
       </main>
 
       {/* Floating Action Buttons */}
-      <div className="fixed bottom-8 left-8 z-50">
+      <div className="fixed bottom-8 left-8 z-[60]">
         <Button
           onClick={() => setShowCreateModal(true)}
           className="bg-sky-500 hover:bg-sky-600 text-white rounded-full px-6 py-6 shadow-lg shadow-sky-500/30 flex items-center gap-2 font-semibold transition-transform hover:scale-105 active:scale-95"
@@ -480,7 +480,7 @@ function App() {
         </Button>
       </div>
 
-      <div className="fixed bottom-8 right-8 z-50">
+      <div className="fixed bottom-8 right-8 z-[60]">
         {!isDeleteMode ? (
           <Button
             onClick={() => setIsDeleteMode(true)}
