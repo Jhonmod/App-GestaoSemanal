@@ -35,7 +35,7 @@ const SECTIONS = [
   { id: "stalled", title: "Temas Parados", color: "slate" }
 ];
 
-function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onDragStart, onDragEnd }) {
+function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect }) {
   const priorityStyle = PRIORITY_COLORS[demand.priority];
   
   return (
@@ -45,12 +45,17 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onDragS
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ duration: 0.3 }}
-      className={`bg-white p-6 rounded-xl border ${priorityStyle.border} shadow-sm hover:shadow-md transition-all duration-300 group relative overflow-hidden cursor-grab active:cursor-grabbing`}
+      draggable={!isDeleteMode}
+      onDragStart={(e) => {
+        e.dataTransfer.setData('demandId', demand.id);
+        e.dataTransfer.setData('currentCategory', demand.category);
+        e.currentTarget.style.opacity = '0.5';
+      }}
+      onDragEnd={(e) => {
+        e.currentTarget.style.opacity = '1';
+      }}
+      className={`bg-white p-6 rounded-xl border ${priorityStyle.border} shadow-sm hover:shadow-md transition-all duration-300 group relative overflow-hidden ${!isDeleteMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
       data-testid={`demand-card-${demand.id}`}
-      onMouseDown={onDragStart}
-      onMouseUp={onDragEnd}
-      onTouchStart={onDragStart}
-      onTouchEnd={onDragEnd}
     >
       <div className={`absolute left-0 top-0 bottom-0 w-1 ${priorityStyle.badge}`}></div>
       
