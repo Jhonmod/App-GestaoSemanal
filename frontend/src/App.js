@@ -163,12 +163,15 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
   );
 }
 
-function PresentationMode({ demands, categoryTitle, onClose }) {
+function PresentationMode({ demands, categoryTitle, onClose, singleDemand }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   
-  if (!demands || demands.length === 0) return null;
+  // Se é apresentação de demanda única, usar apenas essa demanda
+  const demandsToShow = singleDemand ? [singleDemand] : demands;
   
-  const currentDemand = demands[currentIndex];
+  if (!demandsToShow || demandsToShow.length === 0) return null;
+  
+  const currentDemand = demandsToShow[currentIndex];
   const priorityStyle = PRIORITY_COLORS[currentDemand.priority];
   
   return (
