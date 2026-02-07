@@ -590,15 +590,15 @@ function App() {
               </div>
               
               <div 
-                className={`min-h-32 space-y-3 rounded-xl p-4 transition-all duration-300 ${
-                  dragOverCategory === section.id ? 'bg-sky-100 border-2 border-dashed border-sky-400' : 'bg-transparent'
+                className={`min-h-48 space-y-3 rounded-xl p-6 transition-all duration-300 ${
+                  dragOverCategory === section.id ? 'bg-sky-100 border-2 border-dashed border-sky-400 scale-[1.02]' : 'bg-transparent'
                 }`}
               >
                 {sectionDemands.length === 0 ? (
-                  <div className="text-center py-12 text-slate-400">
+                  <div className="text-center py-16 text-slate-400">
                     <p className="text-sm">Nenhuma demanda nesta categoria</p>
                     {dragOverCategory === section.id && (
-                      <p className="text-sm text-sky-600 mt-2">Solte aqui para mover</p>
+                      <p className="text-sm text-sky-600 mt-2 font-semibold">↓ Solte aqui para mover ↓</p>
                     )}
                   </div>
                 ) : (
@@ -611,6 +611,8 @@ function App() {
                           isDeleteMode={isDeleteMode}
                           selectedIds={selectedIds}
                           onToggleSelect={toggleSelect}
+                          onMoveTo={handleContextMoveTo}
+                          onOpenPresentation={handleOpenSinglePresentation}
                         />
                       ))}
                     </AnimatePresence>
