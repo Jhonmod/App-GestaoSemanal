@@ -123,7 +123,6 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
                   <span className="font-medium">Responsável:</span>
                   <span>{demand.responsible}</span>
                 </div>
-                <div className="text-xs text-slate-400 mt-2">{demand.id}</div>
               </div>
             </div>
           </motion.div>
