@@ -318,26 +318,33 @@ function App() {
       <Toaster position="top-right" />
       
       {/* Header */}
-      <header className="bg-white/70 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }} data-testid="app-title">
-            Gestão de demandas semanal
-          </h1>
-          <div className="text-lg text-slate-600" data-testid="team-name">Desenvolvimento de Vendas</div>
+      <header className="bg-[#004C97] border-b border-[#003D7A] sticky top-0 z-40 shadow-lg">
+        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <img 
+              src="https://customer-assets.emergentagent.com/job_kanban-vendas/artifacts/1puf94aj_image.png" 
+              alt="Martins Logo" 
+              className="h-12 w-auto"
+            />
+            <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Manrope, sans-serif' }} data-testid="app-title">
+              Gestão de demandas semanal
+            </h1>
+          </div>
+          <div className="text-lg text-white font-semibold" data-testid="team-name">Desenvolvimento de Vendas</div>
         </div>
       </header>
 
       {/* Filters */}
-      <div className="max-w-7xl mx-auto px-6 py-6 sticky top-[88px] z-30 bg-gradient-to-br from-slate-50 to-sky-50/50">
-        <div className="bg-white/70 backdrop-blur-md rounded-xl border border-slate-200 p-4 shadow-sm">
+      <div className="max-w-7xl mx-auto px-6 py-6 sticky top-[92px] z-30 bg-gradient-to-br from-slate-50 to-sky-50/50">
+        <div className="bg-[#004C97] rounded-xl border border-[#003D7A] p-4 shadow-lg">
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 text-slate-700">
+            <div className="flex items-center gap-2 text-white">
               <Filter className="w-4 h-4" />
               <span className="font-medium text-sm">Filtros:</span>
             </div>
             
             <div className="flex items-center gap-2">
-              <Label className="text-sm text-slate-600">Prioridade:</Label>
+              <Label className="text-sm text-white font-medium">Prioridade:</Label>
               <Select value={filterPriority} onValueChange={setFilterPriority}>
                 <SelectTrigger className="w-40" data-testid="filter-priority">
                   <SelectValue />
