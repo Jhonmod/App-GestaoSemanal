@@ -311,7 +311,10 @@ function App() {
     let filtered = [...demands];
     
     if (filterPriority !== "all") {
-      filtered = filtered.filter(d => d.priority === filterPriority);
+      filtered = filtered.filter(d => {
+        const match = d.priority === filterPriority;
+        return match;
+      });
     }
     
     if (filterSubgroup !== "all") {
