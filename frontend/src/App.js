@@ -359,9 +359,9 @@ function App() {
             </div>
             
             <div className="flex items-center gap-2">
-              <Label className="text-sm text-slate-600">Sub-grupo:</Label>
+              <Label className="text-sm text-white font-medium">Sub-grupo:</Label>
               <Select value={filterSubgroup} onValueChange={setFilterSubgroup}>
-                <SelectTrigger className="w-56" data-testid="filter-subgroup">
+                <SelectTrigger className="w-56 bg-white" data-testid="filter-subgroup">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -381,6 +381,7 @@ function App() {
                   setFilterPriority("all");
                   setFilterSubgroup("all");
                 }}
+                className="text-white hover:bg-white/20"
                 data-testid="clear-filters-button"
               >
                 Limpar filtros
