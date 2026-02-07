@@ -38,6 +38,35 @@ const SECTIONS = [
 function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect }) {
   const priorityStyle = PRIORITY_COLORS[demand.priority];
   
+  const handleDragStart = (e) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('demandId', demand.id);
+    e.dataTransfer.setData('currentCategory', demand.category);
+    
+    // Criar clone visual do elemento
+    const dragImage = e.currentTarget.cloneNode(true);
+    dragImage.style.position = 'absolute';
+    dragImage.style.top = '-1000px';
+    dragImage.style.width = e.currentTarget.offsetWidth + 'px';
+    dragImage.style.transform = 'rotate(3deg)';
+    dragImage.style.boxShadow = '0 20px 40px rgba(0,0,0,0.3)';
+    dragImage.style.opacity = '0.95';
+    document.body.appendChild(dragImage);
+    e.dataTransfer.setDragImage(dragImage, e.currentTarget.offsetWidth / 2, 30);
+    
+    // Remover o clone após o drag
+    setTimeout(() => {
+      document.body.removeChild(dragImage);
+    }, 0);
+    
+    // Adicionar classe ao elemento original
+    e.currentTarget.classList.add('dragging');
+  };
+  
+  const handleDragEnd = (e) => {
+    e.currentTarget.classList.remove('dragging');
+  };
+  
   return (
     <motion.div
       layout
@@ -46,14 +75,8 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect }) {
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ duration: 0.3 }}
       draggable={!isDeleteMode}
-      onDragStart={(e) => {
-        e.dataTransfer.setData('demandId', demand.id);
-        e.dataTransfer.setData('currentCategory', demand.category);
-        e.currentTarget.style.opacity = '0.5';
-      }}
-      onDragEnd={(e) => {
-        e.currentTarget.style.opacity = '1';
-      }}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       className={`bg-white p-6 rounded-xl border ${priorityStyle.border} shadow-sm hover:shadow-md transition-all duration-300 group relative overflow-hidden ${!isDeleteMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
       data-testid={`demand-card-${demand.id}`}
     >
