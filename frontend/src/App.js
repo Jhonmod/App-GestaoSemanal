@@ -309,13 +309,6 @@ function App() {
     return filteredDemands.filter(d => d.category === category);
   };
 
-  const handleReorder = (newOrder, category) => {
-    // Update local state immediately for smooth UX
-    const otherDemands = filteredDemands.filter(d => d.category !== category);
-    setFilteredDemands([...otherDemands, ...newOrder]);
-  };
-
-  const [draggedItem, setDraggedItem] = useState(null);
   const [dragOverCategory, setDragOverCategory] = useState(null);
 
   return (
