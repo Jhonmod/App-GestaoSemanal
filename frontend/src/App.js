@@ -328,7 +328,7 @@ function App() {
       </header>
 
       {/* Filters */}
-      <div className="max-w-7xl mx-auto px-6 py-6 sticky top-[97px] z-30 bg-gradient-to-br from-slate-50 to-sky-50/50">
+      <div className="max-w-7xl mx-auto px-6 py-6 sticky top-[89px] z-30 bg-gradient-to-br from-slate-50 to-sky-50/50">
         <div className="bg-[#004C97] rounded-xl border border-[#003D7A] p-4 shadow-lg">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2 text-white">
