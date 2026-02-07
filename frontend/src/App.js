@@ -56,7 +56,9 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect }) {
     
     // Remover o clone após o drag
     setTimeout(() => {
-      document.body.removeChild(dragImage);
+      if (document.body.contains(dragImage)) {
+        document.body.removeChild(dragImage);
+      }
     }, 0);
     
     // Adicionar classe ao elemento original
@@ -69,15 +71,14 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect }) {
   
   return (
     <motion.div
-      layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.2 }}
       draggable={!isDeleteMode}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      className={`bg-white p-6 rounded-xl border ${priorityStyle.border} shadow-sm hover:shadow-md transition-all duration-300 group relative overflow-hidden ${!isDeleteMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
+      className={`bg-white p-6 rounded-xl border ${priorityStyle.border} shadow-sm hover:shadow-md transition-shadow duration-300 group relative overflow-hidden ${!isDeleteMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
       data-testid={`demand-card-${demand.id}`}
     >
       <div className={`absolute left-0 top-0 bottom-0 w-1 ${priorityStyle.badge}`}></div>
