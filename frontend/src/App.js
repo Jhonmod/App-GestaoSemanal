@@ -44,7 +44,7 @@ const SECTIONS = [
   { id: "stalled", title: "Temas Parados", color: "slate" }
 ];
 
-function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect }) {
+function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveTo, onOpenPresentation }) {
   const priorityStyle = PRIORITY_COLORS[demand.priority];
   
   const handleDragStart = (e) => {
@@ -79,51 +79,87 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect }) {
   };
   
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.2 }}
-      draggable={!isDeleteMode}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      className={`bg-white p-6 rounded-xl border ${priorityStyle.border} shadow-sm hover:shadow-md transition-shadow duration-300 group relative overflow-hidden ${!isDeleteMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
-      data-testid={`demand-card-${demand.id}`}
-    >
-      <div className={`absolute left-0 top-0 bottom-0 w-1 ${priorityStyle.badge}`}></div>
-      
-      {isDeleteMode && (
-        <div className="absolute top-4 right-4">
-          <Checkbox
-            checked={selectedIds.includes(demand.id)}
-            onCheckedChange={() => onToggleSelect(demand.id)}
-            data-testid={`delete-checkbox-${demand.id}`}
-          />
-        </div>
-      )}
-      
-      <div className="flex items-start gap-3">
-        <div className="text-slate-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <GripVertical className="w-4 h-4" />
-        </div>
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <span className={`text-xs font-semibold px-2 py-1 rounded ${priorityStyle.bg} ${priorityStyle.text}`}>
-              {demand.priority.toUpperCase()}
-            </span>
-            <span className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600">
-              {demand.subgroup}
-            </span>
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          transition={{ duration: 0.2 }}
+          draggable={!isDeleteMode}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          className={`bg-white p-6 rounded-xl border ${priorityStyle.border} shadow-sm hover:shadow-md transition-shadow duration-300 group relative overflow-hidden ${!isDeleteMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
+          data-testid={`demand-card-${demand.id}`}
+        >
+          <div className={`absolute left-0 top-0 bottom-0 w-1 ${priorityStyle.badge}`}></div>
+          
+          {isDeleteMode && (
+            <div className="absolute top-4 right-4">
+              <Checkbox
+                checked={selectedIds.includes(demand.id)}
+                onCheckedChange={() => onToggleSelect(demand.id)}
+                data-testid={`delete-checkbox-${demand.id}`}
+              />
+            </div>
+          )}
+          
+          <div className="flex items-start gap-3">
+            <div className="text-slate-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <GripVertical className="w-4 h-4" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <span className={`text-xs font-semibold px-2 py-1 rounded ${priorityStyle.bg} ${priorityStyle.text}`}>
+                  {demand.priority.toUpperCase()}
+                </span>
+                <span className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600">
+                  {demand.subgroup}
+                </span>
+              </div>
+              <p className="text-sm text-slate-700 leading-relaxed mb-3">{demand.description}</p>
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <span className="font-medium">Responsável:</span>
+                <span>{demand.responsible}</span>
+              </div>
+              <div className="text-xs text-slate-400 mt-2">{demand.id}</div>
+            </div>
           </div>
-          <p className="text-sm text-slate-700 leading-relaxed mb-3">{demand.description}</p>
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <span className="font-medium">Responsável:</span>
-            <span>{demand.responsible}</span>
-          </div>
-          <div className="text-xs text-slate-400 mt-2">{demand.id}</div>
-        </div>
-      </div>
-    </motion.div>
+        </motion.div>
+      </ContextMenuTrigger>
+      <ContextMenuContent className="w-56">
+        <ContextMenuSub>
+          <ContextMenuSubTrigger>
+            <ArrowRight className="w-4 h-4 mr-2" />
+            Mover para
+          </ContextMenuSubTrigger>
+          <ContextMenuSubContent>
+            <ContextMenuItem 
+              onClick={() => onMoveTo(demand.id, 'last_week')}
+              disabled={demand.category === 'last_week'}
+            >
+              Temas Resolvidos (Semana Passada)
+            </ContextMenuItem>
+            <ContextMenuItem 
+              onClick={() => onMoveTo(demand.id, 'this_week')}
+              disabled={demand.category === 'this_week'}
+            >
+              Temas da Semana Atual
+            </ContextMenuItem>
+            <ContextMenuItem 
+              onClick={() => onMoveTo(demand.id, 'stalled')}
+              disabled={demand.category === 'stalled'}
+            >
+              Temas Parados
+            </ContextMenuItem>
+          </ContextMenuSubContent>
+        </ContextMenuSub>
+        <ContextMenuItem onClick={() => onOpenPresentation(demand)}>
+          <Presentation className="w-4 h-4 mr-2" />
+          Modo Apresentação
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }
 
