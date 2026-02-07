@@ -229,7 +229,7 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand }) {
         
         <div className="absolute bottom-8 right-8 flex items-center gap-6">
           <span className="text-slate-400 text-sm">
-            {currentIndex + 1} / {demands.length}
+            {currentIndex + 1} / {demandsToShow.length}
           </span>
           <div className="flex gap-3">
             <Button
@@ -243,8 +243,8 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand }) {
               <ChevronLeft className="w-5 h-5" />
             </Button>
             <Button
-              onClick={() => setCurrentIndex(Math.min(demands.length - 1, currentIndex + 1))}
-              disabled={currentIndex === demands.length - 1}
+              onClick={() => setCurrentIndex(Math.min(demandsToShow.length - 1, currentIndex + 1))}
+              disabled={currentIndex === demandsToShow.length - 1}
               variant="outline"
               size="lg"
               className="rounded-full"
