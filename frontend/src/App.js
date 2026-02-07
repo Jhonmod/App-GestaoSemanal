@@ -333,6 +333,73 @@ function App() {
   };
 
   const [dragOverCategory, setDragOverCategory] = useState(null);
+  const [autoScrollInterval, setAutoScrollInterval] = useState(null);
+
+  // Auto-scroll durante drag
+  const handleDragOverWithScroll = (e, sectionId) => {
+    e.preventDefault();
+    setDragOverCategory(sectionId);
+    
+    const scrollThreshold = 100; // pixels da borda
+    const scrollSpeed = 10;
+    const mouseY = e.clientY;
+    const windowHeight = window.innerHeight;
+    
+    // Clear existing interval
+    if (autoScrollInterval) {
+      clearInterval(autoScrollInterval);
+      setAutoScrollInterval(null);
+    }
+    
+    // Scroll up
+    if (mouseY < scrollThreshold) {
+      const interval = setInterval(() => {
+        window.scrollBy(0, -scrollSpeed);
+      }, 20);
+      setAutoScrollInterval(interval);
+    }
+    // Scroll down
+    else if (mouseY > windowHeight - scrollThreshold) {
+      const interval = setInterval(() => {
+        window.scrollBy(0, scrollSpeed);
+      }, 20);
+      setAutoScrollInterval(interval);
+    }
+  };
+  
+  const handleDragLeave = () => {
+    setDragOverCategory(null);
+    if (autoScrollInterval) {
+      clearInterval(autoScrollInterval);
+      setAutoScrollInterval(null);
+    }
+  };
+  
+  const handleDrop = (e, sectionId) => {
+    e.preventDefault();
+    const demandId = e.dataTransfer.getData('demandId');
+    const currentCategory = e.dataTransfer.getData('currentCategory');
+    
+    if (demandId && currentCategory !== sectionId) {
+      moveDemand(demandId, sectionId);
+      toast.success('Demanda movida com sucesso!');
+    }
+    
+    setDragOverCategory(null);
+    if (autoScrollInterval) {
+      clearInterval(autoScrollInterval);
+      setAutoScrollInterval(null);
+    }
+  };
+
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (autoScrollInterval) {
+        clearInterval(autoScrollInterval);
+      }
+    };
+  }, [autoScrollInterval]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-50/50" style={{ fontFamily: 'Inter, sans-serif' }}>
