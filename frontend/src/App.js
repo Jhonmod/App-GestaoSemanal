@@ -752,9 +752,10 @@ function App() {
       <AnimatePresence>
         {presentationMode && (
           <PresentationMode
-            demands={getDemandsByCategory(presentationMode.category)}
+            demands={presentationMode.singleDemand ? null : getDemandsByCategory(presentationMode.category)}
             categoryTitle={presentationMode.title}
             onClose={() => setPresentationMode(null)}
+            singleDemand={presentationMode.singleDemand}
           />
         )}
       </AnimatePresence>
