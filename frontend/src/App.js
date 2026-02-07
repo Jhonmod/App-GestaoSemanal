@@ -541,10 +541,10 @@ function App() {
             <div className="space-y-2">
               <Label htmlFor="priority">Prioridade *</Label>
               <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
-                <SelectTrigger data-testid="input-priority">
+                <SelectTrigger data-testid="input-priority" className="z-[100]">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[100]">
                   <SelectItem value="alta">Alta Prioridade</SelectItem>
                   <SelectItem value="media">Prioridade Média</SelectItem>
                   <SelectItem value="baixa">Baixa Prioridade</SelectItem>
@@ -555,10 +555,10 @@ function App() {
             <div className="space-y-2">
               <Label htmlFor="subgroup">Sub-grupo *</Label>
               <Select value={formData.subgroup} onValueChange={(value) => setFormData({ ...formData, subgroup: value })}>
-                <SelectTrigger data-testid="input-subgroup">
+                <SelectTrigger data-testid="input-subgroup" className="z-[100]">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[100]">
                   {SUBGROUPS.map(sg => (
                     <SelectItem key={sg} value={sg}>{sg}</SelectItem>
                   ))}
@@ -577,18 +577,8 @@ function App() {
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="category">Categoria Inicial</Label>
-              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                <SelectTrigger data-testid="input-category">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="last_week">Semana Passada</SelectItem>
-                  <SelectItem value="this_week">Semana Atual</SelectItem>
-                  <SelectItem value="stalled">Parados</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="text-sm text-slate-500 bg-sky-50 p-3 rounded-lg border border-sky-200">
+              <strong>Categoria:</strong> Semana Atual (você pode mover depois arrastando)
             </div>
           </div>
           
