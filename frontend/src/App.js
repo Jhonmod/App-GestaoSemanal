@@ -483,10 +483,17 @@ function App() {
       
       {/* Header */}
       <header className="bg-[#004C97] border-b border-[#003D7A] sticky top-0 z-40 shadow-lg">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Manrope, sans-serif' }} data-testid="app-title">
-            Gestão de demandas semanal
-          </h1>
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <img 
+              src="https://customer-assets.emergentagent.com/job_kanban-vendas/artifacts/dagja3ws_ChatGPT%20Image%207%20de%20fev.%20de%202026%2C%2016_51_34.png" 
+              alt="Martins Logo" 
+              className="h-12 w-auto brightness-0 invert"
+            />
+            <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Manrope, sans-serif' }} data-testid="app-title">
+              Gestão de demandas semanal
+            </h1>
+          </div>
           <div className="text-lg text-white font-semibold" data-testid="team-name">Desenvolvimento de Vendas</div>
         </div>
       </header>
