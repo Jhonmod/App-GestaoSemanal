@@ -1,0 +1,132 @@
+{
+  "typography": {
+    "font_family": {
+      "heading": "Manrope, sans-serif",
+      "body": "Inter, sans-serif",
+      "presentation": "Plus Jakarta Sans, sans-serif"
+    },
+    "scale": {
+      "h1": "text-4xl font-bold tracking-tight",
+      "h2": "text-2xl font-semibold tracking-tight",
+      "h3": "text-xl font-medium",
+      "body": "text-sm leading-relaxed",
+      "caption": "text-xs text-slate-500"
+    }
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "main": "#0EA5E9",
+        "light": "#E0F2FE",
+        "dark": "#0284C7"
+      },
+      "secondary": {
+        "main": "#64748B",
+        "light": "#F1F5F9",
+        "dark": "#334155"
+      },
+      "background": {
+        "app": "#F8FAFC",
+        "card": "#FFFFFF",
+        "presentation": "#0F172A"
+      },
+      "priority": {
+        "high": "#F43F5E",
+        "medium": "#F59E0B",
+        "low": "#3B82F6"
+      },
+      "status": {
+        "resolved": "#10B981",
+        "stalled": "#64748B"
+      }
+    }
+  },
+  "layout": {
+    "structure": "vertical_stack",
+    "container": "max-w-5xl mx-auto px-6 py-8",
+    "spacing": "space-y-8",
+    "sections": [
+      {
+        "id": "last_week",
+        "title": "Temas Resolvidos (Semana Passada)",
+        "color_theme": "emerald"
+      },
+      {
+        "id": "this_week",
+        "title": "Temas da Semana Atual",
+        "color_theme": "sky",
+        "is_primary": true
+      },
+      {
+        "id": "stalled",
+        "title": "Temas Parados",
+        "color_theme": "slate"
+      }
+    ]
+  },
+  "components": {
+    "DemandCard": {
+      "styles": "bg-white p-6 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 group relative overflow-hidden",
+      "features": [
+        "Drag handle",
+        "Priority indicator (colored strip or dot)",
+        "Avatar stack for responsibles",
+        "Sub-group badge"
+      ]
+    },
+    "CreateThemeButton": {
+      "position": "fixed bottom-8 left-8 z-50",
+      "style": "bg-sky-500 hover:bg-sky-600 text-white rounded-full px-6 py-4 shadow-lg shadow-sky-500/30 flex items-center gap-2 font-semibold transition-transform hover:scale-105 active:scale-95"
+    },
+    "PresentationMode": {
+      "overlay": "fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-8",
+      "card": "bg-white w-full max-w-4xl aspect-video rounded-3xl shadow-2xl p-16 flex flex-col justify-between relative overflow-hidden",
+      "controls": "absolute bottom-8 right-8 flex gap-4"
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": "backdrop-blur-md bg-white/70 border border-white/20",
+    "shadows": {
+      "soft": "shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]",
+      "floating": "shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)]"
+    },
+    "gradients": {
+      "subtle_blue": "bg-gradient-to-br from-slate-50 to-sky-50/50"
+    }
+  },
+  "image_urls": {
+    "avatars": [
+      "https://images.unsplash.com/photo-1758613654360-45f1ff78c0cf?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "https://images.unsplash.com/photo-1639600281261-be8aeadf1269?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "https://images.unsplash.com/photo-1767175473698-859bc73e8e64?crop=entropy&cs=srgb&fm=jpg&q=85"
+    ],
+    "textures": {
+      "presentation_bg": "https://images.unsplash.com/photo-1643509324658-a75c1e05f261?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "empty_state": "https://images.unsplash.com/photo-1551148552-b631bbe476b2?crop=entropy&cs=srgb&fm=jpg&q=85"
+    }
+  },
+  "instructions_to_main_agent": {
+    "setup": [
+      "Install 'framer-motion' for drag-and-drop and transitions.",
+      "Install 'lucide-react' for icons.",
+      "Ensure Tailwind config includes the custom colors and fonts."
+    ],
+    "implementation_steps": [
+      "1. Layout Construction: Build the vertical container with 3 distinct 'Droppable' zones using Framer Motion Reorder or dnd-kit.",
+      "2. Card Design: Create the 'DemandCard' component. It must be elegant, not cluttered. Use badges for 'Sub-group'.",
+      "3. Interaction: Implement the 'Create Theme' floating button. It opens a Shadcn Dialog.",
+      "4. Presentation Mode: Create a full-screen overlay. Use the 'textures.presentation_bg' as a subtle background image with low opacity. The content should appear as a large 'Slide'.",
+      "5. Filtering: Add a sticky header or sidebar for 'Priority' and 'Sub-group' filters."
+    ],
+    "critical_constraints": [
+      "Do NOT use generic blue (#0000FF). Use the specified Slate/Sky palette.",
+      "Ensure drag-and-drop works smoothly between the vertical sections.",
+      "The 'Presentation Mode' must look like a Keynote slide, not just a bigger modal."
+    ]
+  },
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": {
+    "design_philosophy": "Clean, Airy, Professional but not Boring.",
+    "interactions": "All buttons must have active/hover states. Lists should have staggered entrance animations.",
+    "accessibility": "Ensure text contrast on the light blue backgrounds."
+  }
+}
