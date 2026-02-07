@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -6,10 +6,9 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
-from typing import List
-import uuid
+from typing import List, Optional
 from datetime import datetime, timezone
-
+from enum import Enum
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -19,52 +18,139 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Create the main app without a prefix
+# Create the main app
 app = FastAPI()
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# Enums
+class PriorityEnum(str, Enum):
+    alta = "alta"
+    media = "media"
+    baixa = "baixa"
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
+class CategoryEnum(str, Enum):
+    last_week = "last_week"
+    this_week = "this_week"
+    stalled = "stalled"
+
+class SubgroupEnum(str, Enum):
+    gestao_territorios = "Gestão de territórios"
+    bi_analytics = "BI Analytics"
+    setor_autonomos = "Setor Autônomos"
+    agendas_incentivos = "Agendas e Incentivos"
+    help_desk = "Help Desk"
+
+# Models
+class DemandCreate(BaseModel):
+    description: str
+    priority: PriorityEnum
+    responsible: str
+    subgroup: SubgroupEnum
+    category: CategoryEnum = CategoryEnum.this_week
+
+class DemandUpdate(BaseModel):
+    description: Optional[str] = None
+    priority: Optional[PriorityEnum] = None
+    responsible: Optional[str] = None
+    subgroup: Optional[SubgroupEnum] = None
+    category: Optional[CategoryEnum] = None
+
+class Demand(BaseModel):
+    model_config = ConfigDict(extra="ignore")
     
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    id: str
+    description: str
+    priority: PriorityEnum
+    responsible: str
+    subgroup: SubgroupEnum
+    category: CategoryEnum
+    created_at: str
+    updated_at: str
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+class BulkDeleteRequest(BaseModel):
+    ids: List[str]
 
-# Add your routes to the router instead of directly to app
+# Routes
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Weekly Demand Management API"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
+@api_router.post("/demands", response_model=Demand)
+async def create_demand(demand: DemandCreate):
+    now = datetime.now(timezone.utc).isoformat()
     
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
+    # Get the count to generate a simple incremental ID
+    count = await db.demands.count_documents({})
+    demand_id = f"DMD-{count + 1:04d}"
     
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
+    demand_dict = demand.model_dump()
+    demand_dict['id'] = demand_id
+    demand_dict['created_at'] = now
+    demand_dict['updated_at'] = now
+    
+    await db.demands.insert_one(demand_dict)
+    
+    return Demand(**demand_dict)
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
+@api_router.get("/demands", response_model=List[Demand])
+async def get_demands(
+    priority: Optional[PriorityEnum] = None,
+    subgroup: Optional[SubgroupEnum] = None,
+    category: Optional[CategoryEnum] = None
+):
+    # Build filter
+    filters = {}
+    if priority:
+        filters['priority'] = priority
+    if subgroup:
+        filters['subgroup'] = subgroup
+    if category:
+        filters['category'] = category
     
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
+    demands = await db.demands.find(filters, {"_id": 0}).to_list(1000)
+    return [Demand(**d) for d in demands]
+
+@api_router.get("/demands/{demand_id}", response_model=Demand)
+async def get_demand(demand_id: str):
+    demand = await db.demands.find_one({"id": demand_id}, {"_id": 0})
+    if not demand:
+        raise HTTPException(status_code=404, detail="Demand not found")
+    return Demand(**demand)
+
+@api_router.put("/demands/{demand_id}", response_model=Demand)
+async def update_demand(demand_id: str, demand_update: DemandUpdate):
+    # Check if demand exists
+    existing = await db.demands.find_one({"id": demand_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Demand not found")
     
-    return status_checks
+    # Update only provided fields
+    update_data = {k: v for k, v in demand_update.model_dump().items() if v is not None}
+    
+    if update_data:
+        update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
+        await db.demands.update_one(
+            {"id": demand_id},
+            {"$set": update_data}
+        )
+    
+    # Fetch updated demand
+    updated_demand = await db.demands.find_one({"id": demand_id}, {"_id": 0})
+    return Demand(**updated_demand)
+
+@api_router.delete("/demands/{demand_id}")
+async def delete_demand(demand_id: str):
+    result = await db.demands.delete_one({"id": demand_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Demand not found")
+    return {"message": "Demand deleted successfully"}
+
+@api_router.post("/demands/bulk-delete")
+async def bulk_delete_demands(request: BulkDeleteRequest):
+    result = await db.demands.delete_many({"id": {"$in": request.ids}})
+    return {"message": f"{result.deleted_count} demands deleted successfully"}
 
 # Include the router in the main app
 app.include_router(api_router)
