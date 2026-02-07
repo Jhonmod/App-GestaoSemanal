@@ -587,6 +587,8 @@ function App() {
                           onToggleSelect={toggleSelect}
                           onMoveTo={handleContextMoveTo}
                           onOpenPresentation={handleOpenSinglePresentation}
+                          onDragStart={handleDragStart}
+                          onDragEnd={handleDragEnd}
                         />
                       ))}
                     </AnimatePresence>
