@@ -51,6 +51,12 @@ select:focus-visible {
 /* Drag state styling */
 .dragging {
   opacity: 0.4 !important;
-  transform: scale(0.98);
+  transform: scale(0.98) !important;
   border: 2px dashed #0EA5E9 !important;
+  transition: none !important;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: auto;
 }
