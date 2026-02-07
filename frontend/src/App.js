@@ -349,6 +349,20 @@ function App() {
       toast.error("Erro ao mover demanda");
     }
   };
+  
+  const handleContextMoveTo = async (demandId, newCategory) => {
+    await moveDemand(demandId, newCategory);
+    toast.success("Demanda movida com sucesso!");
+  };
+  
+  const handleOpenSinglePresentation = (demand) => {
+    const sectionTitle = SECTIONS.find(s => s.id === demand.category)?.title || "Demanda";
+    setPresentationMode({ 
+      category: demand.category, 
+      title: sectionTitle,
+      singleDemand: demand 
+    });
+  };
 
   const deleteSelected = async () => {
     if (selectedIds.length === 0) {
