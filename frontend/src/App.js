@@ -44,7 +44,7 @@ const SECTIONS = [
   { id: "stalled", title: "Temas Parados", color: "slate" }
 ];
 
-function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveTo, onOpenPresentation }) {
+function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveTo, onOpenPresentation, onDragStart, onDragEnd }) {
   const priorityStyle = PRIORITY_COLORS[demand.priority];
   
   const handleDragStart = (e) => {
@@ -72,10 +72,16 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
     
     // Adicionar classe ao elemento original
     e.currentTarget.classList.add('dragging');
+    
+    // Notificar o App que drag começou
+    if (onDragStart) onDragStart();
   };
   
   const handleDragEnd = (e) => {
     e.currentTarget.classList.remove('dragging');
+    
+    // Notificar o App que drag terminou
+    if (onDragEnd) onDragEnd();
   };
   
   return (
