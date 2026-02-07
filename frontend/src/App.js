@@ -400,86 +400,37 @@ function App() {
   };
 
   const [dragOverCategory, setDragOverCategory] = useState(null);
-  const autoScrollIntervalRef = useRef(null);
-  const isDraggingRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const scrollIntervalRef = useRef(null);
 
-  // Auto-scroll super suave
-  const handleDragOverWithScroll = (e, sectionId) => {
-    e.preventDefault();
-    setDragOverCategory(sectionId);
-    
-    if (!isDraggingRef.current) {
-      isDraggingRef.current = true;
+  // Scroll suave ao passar pelas zonas
+  const handleScrollZoneEnter = (direction) => {
+    if (scrollIntervalRef.current) {
+      clearInterval(scrollIntervalRef.current);
     }
     
-    const scrollZone = 180;
-    const maxScrollSpeed = 20;
-    const mouseY = e.clientY;
-    const windowHeight = window.innerHeight;
-    
-    // Clear existing interval
-    if (autoScrollIntervalRef.current) {
-      clearInterval(autoScrollIntervalRef.current);
-      autoScrollIntervalRef.current = null;
-    }
-    
-    let scrollSpeed = 0;
-    
-    // Calcular velocidade baseada na proximidade da borda
-    if (mouseY < scrollZone) {
-      const proximity = 1 - (mouseY / scrollZone);
-      scrollSpeed = -Math.ceil(proximity * maxScrollSpeed);
-    } else if (mouseY > windowHeight - scrollZone) {
-      const proximity = 1 - ((windowHeight - mouseY) / scrollZone);
-      scrollSpeed = Math.ceil(proximity * maxScrollSpeed);
-    }
-    
-    // Aplicar scroll se necessário
-    if (scrollSpeed !== 0) {
-      let currentSpeed = scrollSpeed;
-      autoScrollIntervalRef.current = setInterval(() => {
-        // Easing para scroll mais suave
-        window.scrollBy({ top: currentSpeed * 0.5, behavior: 'auto' });
-      }, 8); // Intervalo menor para mais suavidade
-    }
+    const scrollSpeed = direction === 'up' ? -15 : 15;
+    scrollIntervalRef.current = setInterval(() => {
+      window.scrollBy({ top: scrollSpeed, behavior: 'auto' });
+    }, 16);
   };
   
-  const clearAutoScroll = () => {
-    if (autoScrollIntervalRef.current) {
-      clearInterval(autoScrollIntervalRef.current);
-      autoScrollIntervalRef.current = null;
+  const handleScrollZoneLeave = () => {
+    if (scrollIntervalRef.current) {
+      clearInterval(scrollIntervalRef.current);
+      scrollIntervalRef.current = null;
     }
-    isDraggingRef.current = false;
-  };
-  
-  const handleDragLeave = () => {
-    setDragOverCategory(null);
-    clearAutoScroll();
-  };
-  
-  const handleDrop = async (e, sectionId) => {
-    e.preventDefault();
-    
-    // Limpar scroll imediatamente
-    clearAutoScroll();
-    
-    const demandId = e.dataTransfer.getData('demandId');
-    const currentCategory = e.dataTransfer.getData('currentCategory');
-    
-    if (demandId && currentCategory !== sectionId) {
-      await moveDemand(demandId, sectionId);
-      toast.success('Demanda movida com sucesso!');
-    }
-    
-    setDragOverCategory(null);
   };
 
-  // Cleanup interval on unmount
-  useEffect(() => {
-    return () => {
-      clearAutoScroll();
-    };
-  }, []);
+  // Handlers de drag simplificados
+  const handleDragStart = () => {
+    setIsDragging(true);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    handleScrollZoneLeave();
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-50/50" style={{ fontFamily: 'Inter, sans-serif' }}>
