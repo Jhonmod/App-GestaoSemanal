@@ -409,10 +409,13 @@ function App() {
               onDragLeave={() => setDragOverCategory(null)}
               onDrop={(e) => {
                 e.preventDefault();
-                if (draggedItem && draggedItem.category !== section.id) {
-                  moveDemand(draggedItem.id, section.id);
+                const demandId = e.dataTransfer.getData('demandId');
+                const currentCategory = e.dataTransfer.getData('currentCategory');
+                
+                if (demandId && currentCategory !== section.id) {
+                  moveDemand(demandId, section.id);
+                  toast.success('Demanda movida com sucesso!');
                 }
-                setDraggedItem(null);
                 setDragOverCategory(null);
               }}
             >
@@ -434,39 +437,31 @@ function App() {
               </div>
               
               <div 
-                className={`min-h-32 space-y-3 transition-all duration-300 ${
-                  dragOverCategory === section.id ? 'bg-sky-50 border-2 border-dashed border-sky-300 rounded-xl p-4' : ''
+                className={`min-h-32 space-y-3 rounded-xl p-4 transition-all duration-300 ${
+                  dragOverCategory === section.id ? 'bg-sky-100 border-2 border-dashed border-sky-400' : 'bg-transparent'
                 }`}
               >
                 {sectionDemands.length === 0 ? (
                   <div className="text-center py-12 text-slate-400">
                     <p className="text-sm">Nenhuma demanda nesta categoria</p>
+                    {dragOverCategory === section.id && (
+                      <p className="text-sm text-sky-600 mt-2">Solte aqui para mover</p>
+                    )}
                   </div>
                 ) : (
-                  <Reorder.Group
-                    axis="y"
-                    values={sectionDemands}
-                    onReorder={(newOrder) => handleReorder(newOrder, section.id)}
-                    className="space-y-3"
-                  >
-                    {sectionDemands.map(demand => (
-                      <Reorder.Item
-                        key={demand.id}
-                        value={demand}
-                        drag
-                        dragListener={!isDeleteMode}
-                        onDragStart={() => setDraggedItem(demand)}
-                        onDragEnd={() => setDraggedItem(null)}
-                      >
+                  <div className="space-y-3">
+                    <AnimatePresence>
+                      {sectionDemands.map(demand => (
                         <DemandCard
+                          key={demand.id}
                           demand={demand}
                           isDeleteMode={isDeleteMode}
                           selectedIds={selectedIds}
                           onToggleSelect={toggleSelect}
                         />
-                      </Reorder.Item>
-                    ))}
-                  </Reorder.Group>
+                      ))}
+                    </AnimatePresence>
+                  </div>
                 )}
               </div>
             </motion.div>
