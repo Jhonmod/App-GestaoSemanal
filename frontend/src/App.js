@@ -336,8 +336,9 @@ function App() {
   const [dragOverCategory, setDragOverCategory] = useState(null);
   const autoScrollIntervalRef = useRef(null);
   const isDraggingRef = useRef(false);
+  const lastScrollTimeRef = useRef(0);
 
-  // Auto-scroll durante drag - versão corrigida
+  // Auto-scroll melhorado durante drag
   const handleDragOverWithScroll = (e, sectionId) => {
     e.preventDefault();
     setDragOverCategory(sectionId);
@@ -346,8 +347,8 @@ function App() {
       isDraggingRef.current = true;
     }
     
-    const scrollThreshold = 120;
-    const scrollSpeed = 8;
+    const scrollZone = 150; // Zona de ativação do auto-scroll em pixels
+    const maxScrollSpeed = 15; // Velocidade máxima de scroll
     const mouseY = e.clientY;
     const windowHeight = window.innerHeight;
     
@@ -357,17 +358,29 @@ function App() {
       autoScrollIntervalRef.current = null;
     }
     
-    // Scroll up
-    if (mouseY < scrollThreshold) {
-      autoScrollIntervalRef.current = setInterval(() => {
-        window.scrollBy({ top: -scrollSpeed, behavior: 'auto' });
-      }, 16);
+    let scrollSpeed = 0;
+    
+    // Calcular velocidade baseada na proximidade da borda
+    if (mouseY < scrollZone) {
+      // Quanto mais perto do topo, mais rápido
+      const proximity = 1 - (mouseY / scrollZone);
+      scrollSpeed = -Math.ceil(proximity * maxScrollSpeed);
+    } else if (mouseY > windowHeight - scrollZone) {
+      // Quanto mais perto do fundo, mais rápido
+      const proximity = 1 - ((windowHeight - mouseY) / scrollZone);
+      scrollSpeed = Math.ceil(proximity * maxScrollSpeed);
     }
-    // Scroll down
-    else if (mouseY > windowHeight - scrollThreshold) {
+    
+    // Aplicar scroll se necessário
+    if (scrollSpeed !== 0) {
       autoScrollIntervalRef.current = setInterval(() => {
-        window.scrollBy({ top: scrollSpeed, behavior: 'auto' });
-      }, 16);
+        const now = Date.now();
+        // Throttle para evitar scroll muito rápido
+        if (now - lastScrollTimeRef.current > 10) {
+          window.scrollBy({ top: scrollSpeed, behavior: 'auto' });
+          lastScrollTimeRef.current = now;
+        }
+      }, 16); // ~60fps
     }
   };
   
