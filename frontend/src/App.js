@@ -346,7 +346,7 @@ function App() {
             <div className="flex items-center gap-2">
               <Label className="text-sm text-white font-medium">Prioridade:</Label>
               <Select value={filterPriority} onValueChange={setFilterPriority}>
-                <SelectTrigger className="w-40" data-testid="filter-priority">
+                <SelectTrigger className="w-40 bg-white" data-testid="filter-priority">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
