@@ -735,6 +735,43 @@ function App() {
           />
         )}
       </AnimatePresence>
+
+      {/* Scroll Zones - aparecem durante drag */}
+      <AnimatePresence>
+        {isDragging && (
+          <>
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="fixed top-0 left-0 right-0 h-24 bg-gradient-to-b from-sky-500/90 to-sky-500/0 backdrop-blur-sm z-50 flex items-start justify-center pt-4"
+              onDragOver={() => handleScrollZoneEnter('up')}
+              onDragLeave={handleScrollZoneLeave}
+            >
+              <div className="text-white font-semibold flex items-center gap-2 animate-bounce">
+                <ChevronLeft className="w-5 h-5 rotate-90" />
+                Arraste aqui para rolar para cima
+                <ChevronRight className="w-5 h-5 rotate-90" />
+              </div>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="fixed bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-sky-500/90 to-sky-500/0 backdrop-blur-sm z-50 flex items-end justify-center pb-4"
+              onDragOver={() => handleScrollZoneEnter('down')}
+              onDragLeave={handleScrollZoneLeave}
+            >
+              <div className="text-white font-semibold flex items-center gap-2 animate-bounce">
+                <ChevronLeft className="w-5 h-5 -rotate-90" />
+                Arraste aqui para rolar para baixo
+                <ChevronRight className="w-5 h-5 -rotate-90" />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
