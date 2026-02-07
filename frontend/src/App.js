@@ -485,22 +485,9 @@ function App() {
               transition={{ duration: 0.5 }}
               className="bg-white/50 backdrop-blur-sm rounded-2xl border border-slate-200 p-6 shadow-sm"
               data-testid={`section-${section.id}`}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragOverCategory(section.id);
-              }}
-              onDragLeave={() => setDragOverCategory(null)}
-              onDrop={(e) => {
-                e.preventDefault();
-                const demandId = e.dataTransfer.getData('demandId');
-                const currentCategory = e.dataTransfer.getData('currentCategory');
-                
-                if (demandId && currentCategory !== section.id) {
-                  moveDemand(demandId, section.id);
-                  toast.success('Demanda movida com sucesso!');
-                }
-                setDragOverCategory(null);
-              }}
+              onDragOver={(e) => handleDragOverWithScroll(e, section.id)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, section.id)}
             >
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>
