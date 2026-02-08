@@ -21,7 +21,6 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 
-// AJUSTE AQUI: Se estiver usando o Render, mantenha esta URL. Se for local, use http://localhost:8000/api
 const API = "https://app-gestaosemanal-1.onrender.com/api";
 
 const PRIORITY_COLORS = {
@@ -45,37 +44,18 @@ const SECTIONS = [
   { id: "stalled", title: "Temas Parados", color: "slate" }
 ];
 
-// FUNÇÃO AUXILIAR PARA LIMPAR O TEXTO DA PRIORIDADE
+// Função para limpar o texto da prioridade
 const formatPriorityText = (text) => {
   if (!text) return "";
-  // Remove a palavra "Prioridade" (case insensitive) e limpa espaços extras
   return text.toLowerCase().replace(/prioridade/g, "").trim().toUpperCase();
 };
 
 function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveTo, onOpenPresentation, onDragStart, onDragEnd, onEdit }) {
-  const priorityStyle = PRIORITY_COLORS[demand.priority];
+  const priorityStyle = PRIORITY_COLORS[demand.priority] || PRIORITY_COLORS.media;
   
   const handleDragStart = (e) => {
-    e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('demandId', demand.id);
     e.dataTransfer.setData('currentCategory', demand.category);
-    
-    const dragImage = e.currentTarget.cloneNode(true);
-    dragImage.style.position = 'absolute';
-    dragImage.style.top = '-1000px';
-    dragImage.style.width = e.currentTarget.offsetWidth + 'px';
-    dragImage.style.transform = 'rotate(3deg)';
-    dragImage.style.boxShadow = '0 20px 40px rgba(0,0,0,0.3)';
-    dragImage.style.opacity = '0.95';
-    document.body.appendChild(dragImage);
-    e.dataTransfer.setDragImage(dragImage, e.currentTarget.offsetWidth / 2, 30);
-    
-    setTimeout(() => {
-      if (document.body.contains(dragImage)) {
-        document.body.removeChild(dragImage);
-      }
-    }, 0);
-    
     e.currentTarget.classList.add('dragging');
     if (onDragStart) onDragStart();
   };
@@ -90,81 +70,49 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
   return (
     <ContextMenu modal={false}>
       <ContextMenuTrigger asChild>
-        <div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.2 }}
-            draggable={!isDeleteMode}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            className={`bg-white p-6 rounded-xl border ${priorityStyle.border} shadow-sm hover:shadow-md transition-shadow duration-300 group relative overflow-hidden ${!isDeleteMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
-            data-testid={`demand-card-${demand.id}`}
-          >
-            <div className={`absolute left-0 top-0 bottom-0 w-1 ${priorityStyle.badge}`}></div>
-            
-            {isDeleteMode && (
-              <div className="absolute top-4 right-4">
-                <Checkbox
-                  checked={selectedIds.includes(demand.id)}
-                  onCheckedChange={() => onToggleSelect(demand.id)}
-                  data-testid={`delete-checkbox-${demand.id}`}
-                />
-              </div>
-            )}
-            
-            <div className="flex items-start gap-3">
-              <div className="text-slate-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <GripVertical className="w-4 h-4" />
-              </div>
-              <div className="flex-1">
-                <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <span className={`text-xs font-semibold px-2 py-1 rounded ${priorityStyle.bg} ${priorityStyle.text}`}>
-                    PRIORIDADE {formatPriorityText(demand.priority)}
-                  </span>
-                  {subgroups.map((sg, idx) => (
-                    <span key={idx} className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600">
-                      {sg}
-                    </span>
-                  ))}
-                </div>
-                <p className="text-sm text-slate-700 leading-relaxed mb-3">{demand.description}</p>
-                <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <span className="font-medium">Responsável:</span>
-                  <span>{demand.responsible}</span>
-                </div>
-              </div>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          draggable={!isDeleteMode}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          className={`bg-white p-6 rounded-xl border ${priorityStyle.border} shadow-sm hover:shadow-md transition-all group relative overflow-hidden ${!isDeleteMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
+        >
+          <div className={`absolute left-0 top-0 bottom-0 w-1 ${priorityStyle.badge}`}></div>
+          {isDeleteMode && (
+            <div className="absolute top-4 right-4 z-10">
+              <Checkbox checked={selectedIds.includes(demand.id)} onCheckedChange={() => onToggleSelect(demand.id)} />
             </div>
-          </motion.div>
-        </div>
+          )}
+          <div className="flex items-start gap-3">
+            <GripVertical className="w-4 h-4 text-slate-300 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <span className={`text-xs font-bold px-2 py-0.5 rounded ${priorityStyle.bg} ${priorityStyle.text}`}>
+                  {formatPriorityText(demand.priority)}
+                </span>
+                {subgroups.map((sg, i) => (
+                  <span key={i} className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-500 font-medium">{sg}</span>
+                ))}
+              </div>
+              <p className="text-sm text-slate-700 font-medium mb-3">{demand.description}</p>
+              <div className="text-[11px] text-slate-400">Responsável: <span className="text-slate-600 font-semibold">{demand.responsible}</span></div>
+            </div>
+          </div>
+        </motion.div>
       </ContextMenuTrigger>
-      <ContextMenuContent className="w-56">
-        <ContextMenuItem onClick={() => onEdit(demand)}>
-          <Edit2 className="w-4 h-4 mr-2" />
-          Editar Tema
-        </ContextMenuItem>
+      <ContextMenuContent className="w-48">
+        <ContextMenuItem onClick={() => onEdit(demand)}><Edit2 className="w-4 h-4 mr-2" /> Editar</ContextMenuItem>
         <ContextMenuSub>
-          <ContextMenuSubTrigger>
-            <ArrowRight className="w-4 h-4 mr-2" />
-            Mover para
-          </ContextMenuSubTrigger>
+          <ContextMenuSubTrigger><ArrowRight className="w-4 h-4 mr-2" /> Mover para</ContextMenuSubTrigger>
           <ContextMenuSubContent>
             {SECTIONS.map(sec => (
-               <ContextMenuItem 
-                key={sec.id}
-                onClick={() => onMoveTo(demand.id, sec.id)}
-                disabled={demand.category === sec.id}
-              >
-                {sec.title}
-              </ContextMenuItem>
+              <ContextMenuItem key={sec.id} onClick={() => onMoveTo(demand.id, sec.id)} disabled={demand.category === sec.id}>{sec.title}</ContextMenuItem>
             ))}
           </ContextMenuSubContent>
         </ContextMenuSub>
-        <ContextMenuItem onClick={() => onOpenPresentation(demand)}>
-          <Presentation className="w-4 h-4 mr-2" />
-          Modo Apresentação
-        </ContextMenuItem>
+        <ContextMenuItem onClick={() => onOpenPresentation(demand)}><Presentation className="w-4 h-4 mr-2" /> Apresentar</ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
   );
@@ -173,106 +121,43 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
 function PresentationMode({ demands, categoryTitle, onClose, singleDemand }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const demandsToShow = singleDemand ? [singleDemand] : demands;
-  
-  if (!demandsToShow || demandsToShow.length === 0) return null;
-  
   const currentDemand = demandsToShow[currentIndex];
-  const priorityStyle = PRIORITY_COLORS[currentDemand.priority];
+
+  if (!currentDemand) return null;
+
+  const priorityStyle = PRIORITY_COLORS[currentDemand.priority] || PRIORITY_COLORS.media;
   const subgroups = Array.isArray(currentDemand.subgroup) ? currentDemand.subgroup : [currentDemand.subgroup];
-  
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-8"
-      data-testid="presentation-mode"
-    >
-      <div 
-        className="absolute inset-0 opacity-5"
-        style={{
-          backgroundImage: 'url(https://images.unsplash.com/photo-1643509324658-a75c1e05f261?crop=entropy&cs=srgb&fm=jpg&q=85)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
-      />
-      
-      <motion.div
-        key={currentIndex}
-        initial={{ opacity: 0, x: 100 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -100 }}
-        transition={{ duration: 0.4 }}
-        className="bg-white w-full max-w-5xl aspect-video rounded-3xl shadow-2xl p-16 flex flex-col justify-between relative overflow-hidden z-10"
-      >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6">
+      <motion.div key={currentIndex} initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="bg-white w-full max-w-5xl aspect-video rounded-3xl shadow-2xl p-16 flex flex-col justify-between relative overflow-hidden">
         <div className={`absolute top-0 left-0 right-0 h-2 ${priorityStyle.badge}`}></div>
-        
         <div>
-          <div className="text-sm text-slate-500 mb-4">{categoryTitle}</div>
-          <h2 className="text-5xl font-bold text-slate-900 mb-8 leading-tight" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-            {currentDemand.description}
-          </h2>
+          <div className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">{categoryTitle}</div>
+          <h2 className="text-5xl font-extrabold text-slate-900 leading-tight">{currentDemand.description}</h2>
         </div>
-        
         <div className="space-y-6">
           <div className="flex items-center gap-4">
-            <span className="text-lg text-slate-600">Prioridade:</span>
-            {/* AQUI A MÁGICA: formatPriorityText remove o excesso */}
-            <span className={`text-2xl font-bold ${priorityStyle.text === 'text-rose-600' ? 'text-rose-600' : priorityStyle.text === 'text-amber-600' ? 'text-amber-500' : 'text-sky-700'}`}>
-              {formatPriorityText(currentDemand.priority)}
-            </span>
+            <span className="text-lg text-slate-500">Prioridade:</span>
+            <span className={`text-3xl font-black ${priorityStyle.text}`}>{formatPriorityText(currentDemand.priority)}</span>
           </div>
-          
           <div className="flex items-center gap-4">
-            <span className="text-lg text-slate-600">Responsável:</span>
-            <span className="text-2xl font-semibold text-slate-900">{currentDemand.responsible}</span>
+            <span className="text-lg text-slate-500">Responsável:</span>
+            <span className="text-3xl font-bold text-slate-900">{currentDemand.responsible}</span>
           </div>
-          
-          <div className="flex items-center gap-4">
-            <span className="text-lg text-slate-600">Sub-grupos:</span>
-            <div className="flex flex-wrap gap-2">
-              {subgroups.map((sg, i) => (
-                <span key={i} className="text-xl text-slate-700 bg-slate-100 px-3 py-1 rounded-lg">{sg}</span>
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-3">
+            {subgroups.map((sg, i) => <span key={i} className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-lg">{sg}</span>)}
           </div>
         </div>
-        
-        <div className="absolute bottom-8 right-8 flex items-center gap-6">
-          <span className="text-slate-400 text-sm">
-            {currentIndex + 1} / {demandsToShow.length}
-          </span>
-          <div className="flex gap-3">
-            <Button
-              onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
-              disabled={currentIndex === 0}
-              variant="outline"
-              size="lg"
-              className="rounded-full"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <Button
-              onClick={() => setCurrentIndex(Math.min(demandsToShow.length - 1, currentIndex + 1))}
-              disabled={currentIndex === demandsToShow.length - 1}
-              variant="outline"
-              size="lg"
-              className="rounded-full"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </Button>
+        <div className="flex justify-between items-center mt-8">
+          <span className="text-slate-300 font-mono">{currentIndex + 1} / {demandsToShow.length}</span>
+          <div className="flex gap-4">
+            <Button variant="outline" size="icon" className="rounded-full" onClick={() => setCurrentIndex(c => Math.max(0, c - 1))} disabled={currentIndex === 0}><ChevronLeft /></Button>
+            <Button variant="outline" size="icon" className="rounded-full" onClick={() => setCurrentIndex(c => Math.min(demandsToShow.length - 1, c + 1))} disabled={currentIndex === demandsToShow.length - 1}><ChevronRight /></Button>
           </div>
         </div>
       </motion.div>
-      
-      <Button
-        onClick={onClose}
-        variant="ghost"
-        size="icon"
-        className="absolute top-8 right-8 text-white hover:bg-white/10 rounded-full z-20"
-      >
-        <X className="w-6 h-6" />
-      </Button>
+      <Button onClick={onClose} variant="ghost" size="icon" className="absolute top-8 right-8 text-white hover:bg-white/10 rounded-full"><X /></Button>
     </motion.div>
   );
 }
@@ -287,336 +172,164 @@ function App() {
   const [presentationMode, setPresentationMode] = useState(null);
   const [filterPriority, setFilterPriority] = useState("all");
   const [filterSubgroup, setFilterSubgroup] = useState("all");
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOverCategory, setDragOverCategory] = useState(null);
   
-  const [formData, setFormData] = useState({
-    description: "",
-    priority: "media",
-    responsible: "",
-    subgroup: [],
-    category: "this_week"
-  });
+  const [formData, setFormData] = useState({ description: "", priority: "media", responsible: "", subgroup: [], category: "this_week" });
 
-const fetchDemands = useCallback(async () => {
-  try {
-    const response = await axios.get(`${API}/demands`);
-    
-    const treatedData = response.data.map(d => ({
-      ...d,
-      subgroup: typeof d.subgroup === 'string' ? d.subgroup.split(', ') : d.subgroup
-    }));
-    
-    setDemands(treatedData);
-  } catch (error) {
-    console.error("Error fetching demands:", error);
-    toast.error("Erro ao carregar demandas");
-  }
-}, []);
+  const fetchDemands = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/demands`);
+      setDemands(res.data.map(d => ({ ...d, subgroup: typeof d.subgroup === 'string' ? d.subgroup.split(', ') : d.subgroup })));
+    } catch (e) { toast.error("Erro ao carregar dados"); }
+  }, []);
+
+  useEffect(() => { fetchDemands(); }, [fetchDemands]);
 
   useEffect(() => {
-    fetchDemands();
-  }, [fetchDemands]);
-
-  const applyFilters = useCallback(() => {
-    let filtered = [...demands];
-
-    if (filterPriority !== "all") {
-      filtered = filtered.filter(d => d.priority === filterPriority);
-    }
-
-    if (filterSubgroup !== "all") {
-      filtered = filtered.filter(d => {
-        const subgroups = Array.isArray(d.subgroup) ? d.subgroup : [d.subgroup];
-        return subgroups.includes(filterSubgroup);
-      });
-    }
-
+    let filtered = demands.filter(d => (filterPriority === "all" || d.priority === filterPriority) && (filterSubgroup === "all" || (Array.isArray(d.subgroup) ? d.subgroup.includes(filterSubgroup) : d.subgroup === filterSubgroup)));
     setFilteredDemands(filtered);
   }, [demands, filterPriority, filterSubgroup]);
 
-  useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
-
-  const handleOpenCreate = () => {
-    setEditingDemandId(null);
-    setFormData({
-      description: "",
-      priority: "media",
-      responsible: "",
-      subgroup: [],
-      category: "this_week"
-    });
-    setShowCreateModal(true);
-  };
-
-  const handleOpenEdit = (demand) => {
-    setEditingDemandId(demand.id);
-    setFormData({
-      description: demand.description,
-      priority: demand.priority,
-      responsible: demand.responsible,
-      subgroup: Array.isArray(demand.subgroup) ? demand.subgroup : [demand.subgroup],
-      category: demand.category
-    });
-    setShowCreateModal(true);
-  };
-
   const saveDemand = async () => {
-    if (!formData.description || !formData.responsible || formData.subgroup.length === 0) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
-    
+    if (!formData.description || !formData.responsible || formData.subgroup.length === 0) return toast.error("Preencha os campos obrigatórios");
     try {
-      if (editingDemandId) {
-        await axios.put(`${API}/demands/${editingDemandId}`, formData);
-        toast.success("Demanda atualizada com sucesso!");
-      } else {
-        await axios.post(`${API}/demands`, formData);
-        toast.success("Demanda criada com sucesso!");
-      }
+      if (editingDemandId) await axios.put(`${API}/demands/${editingDemandId}`, formData);
+      else await axios.post(`${API}/demands`, formData);
       setShowCreateModal(false);
       fetchDemands();
-    } catch (error) {
-      console.error("Error saving demand:", error);
-      toast.error("Erro ao salvar demanda");
-    }
+      toast.success("Sucesso!");
+    } catch (e) { toast.error("Erro ao salvar"); }
   };
 
-  const moveDemand = async (demandId, newCategory) => {
-    const originalDemands = [...demands];
-    setDemands(prev => 
-      prev.map(d => d.id === demandId ? { ...d, category: newCategory } : d)
-    );
-
+  const moveDemand = async (id, cat) => {
     try {
-      await axios.put(`${API}/demands/${demandId}`, { category: newCategory });
-    } catch (error) {
-      console.error("Error moving demand:", error);
-      toast.error("Erro ao salvar alteração no servidor");
-      setDemands(originalDemands);
-    }
-  };
-  
-  const handleContextMoveTo = async (demandId, newCategory) => {
-    await moveDemand(demandId, newCategory);
-    toast.success("Demanda movida com sucesso!");
-  };
-  
-  const handleOpenSinglePresentation = (demand) => {
-    const sectionTitle = SECTIONS.find(s => s.id === demand.category)?.title || "Demanda";
-    setPresentationMode({ 
-      category: demand.category, 
-      title: sectionTitle,
-      singleDemand: demand 
-    });
+      await axios.put(`${API}/demands/${id}`, { category: cat });
+      fetchDemands();
+    } catch (e) { toast.error("Erro ao mover"); }
   };
 
   const deleteSelected = async () => {
     try {
       await axios.post(`${API}/demands/bulk-delete`, { ids: selectedIds });
-      toast.success("Demandas excluídas!");
       setSelectedIds([]);
       setIsDeleteMode(false);
       fetchDemands();
-    } catch (error) {
-      toast.error("Erro ao excluir");
-    }
-  };
-
-  const toggleSelect = (id) => {
-    setSelectedIds(prev => 
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
-  };
-
-  const toggleSubgroupSelection = (sg) => {
-    setFormData(prev => {
-      const current = prev.subgroup;
-      if (current.includes(sg)) {
-        return { ...prev, subgroup: current.filter(item => item !== sg) };
-      } else {
-        return { ...prev, subgroup: [...current, sg] };
-      }
-    });
-  };
-
-  const getDemandsByCategory = (category) => {
-    return filteredDemands.filter(d => d.category === category);
-  };
-
-  const [dragOverCategory, setDragOverCategory] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const scrollIntervalRef = useRef(null);
-
-  const handleScrollZoneEnter = (direction) => {
-    if (scrollIntervalRef.current) clearInterval(scrollIntervalRef.current);
-    const scrollSpeed = direction === 'up' ? -15 : 15;
-    scrollIntervalRef.current = setInterval(() => {
-      window.scrollBy({ top: scrollSpeed, behavior: 'auto' });
-    }, 16);
-  };
-  
-  const handleScrollZoneLeave = () => {
-    if (scrollIntervalRef.current) {
-      clearInterval(scrollIntervalRef.current);
-      scrollIntervalRef.current = null;
-    }
-  };
-
-  const handleDragStart = () => setIsDragging(true);
-  const handleDragEnd = () => {
-    setIsDragging(false);
-    handleScrollZoneLeave();
+      toast.success("Excluído!");
+    } catch (e) { toast.error("Erro ao excluir"); }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-50/50" style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div className="min-h-screen bg-slate-50 pb-20">
       <Toaster position="top-right" />
-      
-      {/* Header */}
-      <header className="bg-[#004C97] border-b border-[#003D7A] sticky top-0 z-40 shadow-lg">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <header className="bg-[#004C97] text-white p-4 sticky top-0 z-40 shadow-md">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <img 
-              src="https://customer-assets.emergentagent.com/job_kanban-vendas/artifacts/dagja3ws_ChatGPT%20Image%207%20de%20fev.%20de%202026%2C%2016_51_34.png" 
-              alt="Martins Logo" 
-              className="h-12 w-auto brightness-0 invert"
-            />
-            <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Manrope, sans-serif' }}>
-              Gestão de demandas semanal
-            </h1>
+            <img src="https://customer-assets.emergentagent.com/job_kanban-vendas/artifacts/dagja3ws_ChatGPT%20Image%207%20de%20fev.%20de%202026%2C%2016_51_34.png" className="h-10 brightness-0 invert" alt="logo" />
+            <h1 className="text-xl font-bold">Gestão Semanal</h1>
           </div>
-          <div className="text-lg text-white font-semibold">Desenvolvimento de Vendas</div>
+          <span className="font-medium opacity-80">Desenvolvimento de Vendas</span>
         </div>
       </header>
 
-      {/* Filters */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="bg-[#004C97] rounded-xl border border-[#003D7A] p-4 shadow-lg">
-          <div className="flex flex-wrap items-center gap-6">
-            <div className="flex items-center gap-2 text-white">
-              <Filter className="w-4 h-4" />
-              <span className="font-medium text-sm">Filtros:</span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Label className="text-sm text-white font-medium">Prioridade:</Label>
-              <Select value={filterPriority} onValueChange={setFilterPriority}>
-                <SelectTrigger className="w-40 bg-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="alta">Alta</SelectItem>
-                  <SelectItem value="media">Média</SelectItem>
-                  <SelectItem value="baixa">Baixa</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Label className="text-sm text-white font-medium">Sub-grupo:</Label>
-              <Select value={filterSubgroup} onValueChange={setFilterSubgroup}>
-                <SelectTrigger className="w-56 bg-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {SUBGROUPS.map(sg => (
-                    <SelectItem key={sg} value={sg}>{sg}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {(filterPriority !== "all" || filterSubgroup !== "all") && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setFilterPriority("all");
-                  setFilterSubgroup("all");
-                }}
-                className="text-white hover:bg-white/20"
-              >
-                Limpar filtros
-              </Button>
-            )}
-          </div>
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="bg-white p-4 rounded-xl shadow-sm border mb-8 flex flex-wrap gap-4 items-center">
+          <Filter className="w-4 h-4 text-slate-400" />
+          <Select value={filterPriority} onValueChange={setFilterPriority}>
+            <SelectTrigger className="w-40"><SelectValue placeholder="Prioridade" /></SelectTrigger>
+            <SelectContent><SelectItem value="all">Todas Prioridades</SelectItem><SelectItem value="alta">Alta</SelectItem><SelectItem value="media">Média</SelectItem><SelectItem value="baixa">Baixa</SelectItem></SelectContent>
+          </Select>
+          <Select value={filterSubgroup} onValueChange={setFilterSubgroup}>
+            <SelectTrigger className="w-56"><SelectValue placeholder="Sub-grupo" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos Sub-grupos</SelectItem>
+              {SUBGROUPS.map(sg => <SelectItem key={sg} value={sg}>{sg}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-        {SECTIONS.map(section => {
-          const sectionDemands = getDemandsByCategory(section.id);
-          
-          return (
-            <motion.div
-              key={section.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white/50 backdrop-blur-sm rounded-2xl border border-slate-200 p-6 shadow-sm"
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragOverCategory(section.id);
-              }}
+        <div className="grid grid-cols-1 gap-8">
+          {SECTIONS.map(sec => (
+            <div 
+              key={sec.id} 
+              className={`p-6 rounded-2xl border-2 transition-colors ${dragOverCategory === sec.id ? 'bg-sky-50 border-sky-400 border-dashed' : 'bg-white/50 border-transparent'}`}
+              onDragOver={(e) => { e.preventDefault(); setDragOverCategory(sec.id); }}
               onDragLeave={() => setDragOverCategory(null)}
-              onDrop={async (e) => {
-                e.preventDefault();
-                const demandId = e.dataTransfer.getData('demandId');
-                const currentCategory = e.dataTransfer.getData('currentCategory');
-                
-                if (demandId && currentCategory !== section.id) {
-                  await moveDemand(demandId, section.id);
-                  toast.success('Demanda movida!');
-                }
+              onDrop={(e) => {
+                const id = e.dataTransfer.getData('demandId');
+                if (id) moveDemand(id, sec.id);
                 setDragOverCategory(null);
               }}
             >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>
-                  {section.title}
-                </h2>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPresentationMode({ category: section.id, title: section.title })}
-                  disabled={sectionDemands.length === 0}
-                  className="gap-2"
-                >
-                  <Presentation className="w-4 h-4" />
-                  Modo apresentação
-                </Button>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-slate-800">{sec.title}</h2>
+                <Button variant="ghost" size="sm" onClick={() => setPresentationMode({ category: sec.id, title: sec.title })} disabled={filteredDemands.filter(d => d.category === sec.id).length === 0}><Presentation className="w-4 h-4 mr-2"/>Apresentar</Button>
               </div>
-              
-              <div 
-                className={`min-h-48 space-y-3 rounded-xl p-6 transition-all duration-300 ${
-                  dragOverCategory === section.id ? 'bg-sky-100 border-2 border-dashed border-sky-400 scale-[1.02]' : 'bg-transparent'
-                }`}
-              >
-                {sectionDemands.length === 0 ? (
-                  <div className="text-center py-16 text-slate-400">
-                    <p className="text-sm">Nenhuma demanda nesta categoria</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <AnimatePresence>
-                      {sectionDemands.map(demand => (
-                        <DemandCard
-                          key={demand.id}
-                          demand={demand}
-                          isDeleteMode={isDeleteMode}
-                          selectedIds={selectedIds}
-                          onToggleSelect={toggleSelect}
-                          onMoveTo={handleContextMoveTo}
-                          onOpenPresentation={handleOpenSinglePresentation}
-                          onDragStart={handleDragStart}
-                          onDragEnd={handleDragEnd}
-                          onEdit={handleOpenEdit}
-                        />
-                      ))}
-                    </AnimatePresence>
-                  </div>
-                )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <AnimatePresence>
+                  {filteredDemands.filter(d => d.category === sec.id).map(d => (
+                    <DemandCard key={d.id} demand={d} isDeleteMode={isDeleteMode} selectedIds={selectedIds} onToggleSelect={(id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])} onMoveTo={moveDemand} onOpenPresentation={(d) => setPresentationMode({ singleDemand: d, title: "Foco" })} onEdit={(d) => { setEditingDemandId(d.id); setFormData({ ...d }); setShowCreateModal(true); }} onDragStart={() => setIsDragging(true)} onDragEnd={() => setIsDragging(false)} />
+                  ))}
+                </AnimatePresence>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="fixed bottom-8 left-8 flex gap-4 z-50">
+        <Button onClick={() => { setEditingDemandId(null); setFormData({ description: "", priority: "media", responsible: "", subgroup: [], category: "this_week" }); setShowCreateModal(true); }} className="bg-sky-600 hover:bg-sky-700 shadow-xl rounded-full px-8 py-6"><Plus className="mr-2"/> Novo Tema</Button>
+      </div>
+
+      <div className="fixed bottom-8 right-8 z-50">
+        {!isDeleteMode ? (
+          <Button variant="destructive" onClick={() => setIsDeleteMode(true)} className="rounded-full px-8 py-6 shadow-xl"><Trash2 className="mr-2"/> Excluir</Button>
+        ) : (
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => { setIsDeleteMode(false); setSelectedIds([]); }} className="rounded-full px-6 py-6 bg-white">Cancelar</Button>
+            <Button variant="destructive" onClick={deleteSelected} disabled={selectedIds.length === 0} className="rounded-full px-6 py-6">Confirmar ({selectedIds.length})</Button>
+          </div>
+        )}
+      </div>
+
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{editingDemandId ? "Editar Tema" : "Novo Tema"}</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2"><Label>Descrição</Label><Input value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} /></div>
+            <div className="space-y-2">
+              <Label>Prioridade</Label>
+              <Select value={formData.priority} onValueChange={v => setFormData({...formData, priority: v})}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="alta">Prioridade Alta</SelectItem><SelectItem value="media">Prioridade Média</SelectItem><SelectItem value="baixa">Prioridade Baixa</SelectItem></SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Sub-grupos</Label>
+              <div className="flex flex-wrap gap-2 p-2 border rounded-md">
+                {SUBGROUPS.map(sg => (
+                  <button key={sg} type="button" onClick={() => setFormData(prev => ({ ...prev, subgroup: prev.subgroup.includes(sg) ? prev.subgroup.filter(x => x !== sg) : [...prev.subgroup, sg] }))} className={`text-xs px-3 py-1 rounded-full border transition-colors ${formData.subgroup.includes(sg) ? 'bg-sky-600 text-white border-sky-600' : 'bg-white text-slate-500'}`}>{sg}</button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2"><Label>Responsável</Label><Input value={formData.responsible} onChange={e => setFormData({...formData, responsible: e.target.value})} /></div>
+          </div>
+          <DialogFooter><Button variant="outline" onClick={() => setShowCreateModal(false)}>Cancelar</Button><Button onClick={saveDemand}>Salvar</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AnimatePresence>
+        {presentationMode && (
+          <PresentationMode 
+            demands={presentationMode.singleDemand ? null : filteredDemands.filter(d => d.category === presentationMode.category)} 
+            categoryTitle={presentationMode.title} 
+            onClose={() => setPresentationMode(null)} 
+            singleDemand={presentationMode.singleDemand} 
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+export default App;
