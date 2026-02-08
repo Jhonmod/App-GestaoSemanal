@@ -1,6 +1,6 @@
 from fastapi import FastAPI, APIRouter, HTTPException
 from dotenv import load_dotenv
-from starlette.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
@@ -10,6 +10,7 @@ from typing import List, Optional
 from datetime import datetime, timezone
 from enum import Enum
 
+# Configurações de ambiente
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -18,13 +19,27 @@ mongo_url = os.environ['MONGO_URI']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Create the main app
+# --- INICIALIZAÇÃO DO APP ---
 app = FastAPI()
 
-# Create a router with the /api prefix
+# --- CONFIGURAÇÃO DE CORS (CORRIGIDO) ---
+
+origins = os.environ.get(
+    'CORS_ORIGINS', 
+    'https://app-gestao-semanal-2wc9-mt23smy5z-jhonatas-monteiros-projects.vercel.app'
+).split(',')
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# --- ROUTER E MODELOS ---
 api_router = APIRouter(prefix="/api")
 
-# Enums
 class PriorityEnum(str, Enum):
     alta = "alta"
     media = "media"
@@ -42,7 +57,6 @@ class SubgroupEnum(str, Enum):
     agendas_incentivos = "Agendas e Incentivos"
     help_desk = "Help Desk"
 
-# Models
 class DemandCreate(BaseModel):
     description: str
     priority: PriorityEnum
@@ -59,7 +73,6 @@ class DemandUpdate(BaseModel):
 
 class Demand(BaseModel):
     model_config = ConfigDict(extra="ignore")
-    
     id: str
     description: str
     priority: PriorityEnum
@@ -72,7 +85,7 @@ class Demand(BaseModel):
 class BulkDeleteRequest(BaseModel):
     ids: List[str]
 
-# Routes
+# --- ROTAS ---
 @api_router.get("/")
 async def root():
     return {"message": "Weekly Demand Management API"}
@@ -80,8 +93,6 @@ async def root():
 @api_router.post("/demands", response_model=Demand)
 async def create_demand(demand: DemandCreate):
     now = datetime.now(timezone.utc).isoformat()
-    
-    # Get the count to generate a simple incremental ID
     count = await db.demands.count_documents({})
     demand_id = f"DMD-{count + 1:04d}"
     
@@ -91,7 +102,6 @@ async def create_demand(demand: DemandCreate):
     demand_dict['updated_at'] = now
     
     await db.demands.insert_one(demand_dict)
-    
     return Demand(**demand_dict)
 
 @api_router.get("/demands", response_model=List[Demand])
@@ -100,14 +110,10 @@ async def get_demands(
     subgroup: Optional[SubgroupEnum] = None,
     category: Optional[CategoryEnum] = None
 ):
-    # Build filter
     filters = {}
-    if priority:
-        filters['priority'] = priority
-    if subgroup:
-        filters['subgroup'] = subgroup
-    if category:
-        filters['category'] = category
+    if priority: filters['priority'] = priority
+    if subgroup: filters['subgroup'] = subgroup
+    if category: filters['category'] = category
     
     demands = await db.demands.find(filters, {"_id": 0}).to_list(1000)
     return [Demand(**d) for d in demands]
@@ -121,22 +127,16 @@ async def get_demand(demand_id: str):
 
 @api_router.put("/demands/{demand_id}", response_model=Demand)
 async def update_demand(demand_id: str, demand_update: DemandUpdate):
-    # Check if demand exists
     existing = await db.demands.find_one({"id": demand_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="Demand not found")
     
-    # Update only provided fields
     update_data = {k: v for k, v in demand_update.model_dump().items() if v is not None}
     
     if update_data:
         update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
-        await db.demands.update_one(
-            {"id": demand_id},
-            {"$set": update_data}
-        )
+        await db.demands.update_one({"id": demand_id}, {"$set": update_data})
     
-    # Fetch updated demand
     updated_demand = await db.demands.find_one({"id": demand_id}, {"_id": 0})
     return Demand(**updated_demand)
 
@@ -152,18 +152,10 @@ async def bulk_delete_demands(request: BulkDeleteRequest):
     result = await db.demands.delete_many({"id": {"$in": request.ids}})
     return {"message": f"{result.deleted_count} demands deleted successfully"}
 
-# Include the router in the main app
+# Incluindo o router no app principal
 app.include_router(api_router)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Configure logging
+# Configuração de logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
