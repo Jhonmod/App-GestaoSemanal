@@ -35,7 +35,8 @@ const SUBGROUPS = [
   "Setor Autônomos",
   "Agendas e Incentivos",
   "Help Desk",
-  "Coordenação"
+  "Coordenação",
+  "Treinamentos"
 ];
 
 const SECTIONS = [
