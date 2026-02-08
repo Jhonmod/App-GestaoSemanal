@@ -21,6 +21,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 
+// AJUSTE AQUI: Se estiver usando o Render, mantenha esta URL. Se for local, use http://localhost:8000/api
 const API = "https://app-gestaosemanal-1.onrender.com/api";
 
 const PRIORITY_COLORS = {
@@ -43,6 +44,13 @@ const SECTIONS = [
   { id: "this_week", title: "Temas da Semana Atual", color: "sky" },
   { id: "stalled", title: "Temas Parados", color: "slate" }
 ];
+
+// FUNÇÃO AUXILIAR PARA LIMPAR O TEXTO DA PRIORIDADE
+const formatPriorityText = (text) => {
+  if (!text) return "";
+  // Remove a palavra "Prioridade" (case insensitive) e limpa espaços extras
+  return text.toLowerCase().replace(/prioridade/g, "").trim().toUpperCase();
+};
 
 function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveTo, onOpenPresentation, onDragStart, onDragEnd, onEdit }) {
   const priorityStyle = PRIORITY_COLORS[demand.priority];
@@ -77,7 +85,6 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
     if (onDragEnd) onDragEnd();
   };
 
-  // Garante que subgroup seja tratado como array para exibição
   const subgroups = Array.isArray(demand.subgroup) ? demand.subgroup : [demand.subgroup];
   
   return (
@@ -114,7 +121,7 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
                   <span className={`text-xs font-semibold px-2 py-1 rounded ${priorityStyle.bg} ${priorityStyle.text}`}>
-                    PRIORIDADE {demand.priority.toUpperCase()}
+                    PRIORIDADE {formatPriorityText(demand.priority)}
                   </span>
                   {subgroups.map((sg, idx) => (
                     <span key={idx} className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600">
@@ -210,8 +217,9 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand }) {
         <div className="space-y-6">
           <div className="flex items-center gap-4">
             <span className="text-lg text-slate-600">Prioridade:</span>
+            {/* AQUI A MÁGICA: formatPriorityText remove o excesso */}
             <span className={`text-2xl font-bold ${priorityStyle.text === 'text-rose-600' ? 'text-rose-600' : priorityStyle.text === 'text-amber-600' ? 'text-amber-500' : 'text-sky-700'}`}>
-              PRIORIDADE {currentDemand.priority.toUpperCase()}
+              {formatPriorityText(currentDemand.priority)}
             </span>
           </div>
           
@@ -222,7 +230,7 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand }) {
           
           <div className="flex items-center gap-4">
             <span className="text-lg text-slate-600">Sub-grupos:</span>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {subgroups.map((sg, i) => (
                 <span key={i} className="text-xl text-slate-700 bg-slate-100 px-3 py-1 rounded-lg">{sg}</span>
               ))}
@@ -284,7 +292,7 @@ function App() {
     description: "",
     priority: "media",
     responsible: "",
-    subgroup: [], // Agora é um array para multiseleção
+    subgroup: [],
     category: "this_week"
   });
 
@@ -355,7 +363,7 @@ const fetchDemands = useCallback(async () => {
 
   const saveDemand = async () => {
     if (!formData.description || !formData.responsible || formData.subgroup.length === 0) {
-      toast.error("Preencha todos os campos obrigatórios (incluindo pelo menos um sub-grupo)");
+      toast.error("Preencha todos os campos obrigatórios");
       return;
     }
     
@@ -405,20 +413,14 @@ const fetchDemands = useCallback(async () => {
   };
 
   const deleteSelected = async () => {
-    if (selectedIds.length === 0) {
-      toast.error("Selecione pelo menos uma demanda");
-      return;
-    }
-    
     try {
       await axios.post(`${API}/demands/bulk-delete`, { ids: selectedIds });
-      toast.success(`${selectedIds.length} demanda(s) excluída(s) com sucesso!`);
+      toast.success("Demandas excluídas!");
       setSelectedIds([]);
       setIsDeleteMode(false);
       fetchDemands();
     } catch (error) {
-      console.error("Error deleting demands:", error);
-      toast.error("Erro ao excluir demandas");
+      toast.error("Erro ao excluir");
     }
   };
 
@@ -448,10 +450,7 @@ const fetchDemands = useCallback(async () => {
   const scrollIntervalRef = useRef(null);
 
   const handleScrollZoneEnter = (direction) => {
-    if (scrollIntervalRef.current) {
-      clearInterval(scrollIntervalRef.current);
-    }
-    
+    if (scrollIntervalRef.current) clearInterval(scrollIntervalRef.current);
     const scrollSpeed = direction === 'up' ? -15 : 15;
     scrollIntervalRef.current = setInterval(() => {
       window.scrollBy({ top: scrollSpeed, behavior: 'auto' });
@@ -493,9 +492,9 @@ const fetchDemands = useCallback(async () => {
       </header>
 
       {/* Filters */}
-      <div className="max-w-7xl mx-auto px-6 py-6 bg-gradient-to-br from-slate-50 to-sky-50/50">
+      <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="bg-[#004C97] rounded-xl border border-[#003D7A] p-4 shadow-lg">
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-6">
             <div className="flex items-center gap-2 text-white">
               <Filter className="w-4 h-4" />
               <span className="font-medium text-sm">Filtros:</span>
@@ -558,7 +557,6 @@ const fetchDemands = useCallback(async () => {
               key={section.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
               className="bg-white/50 backdrop-blur-sm rounded-2xl border border-slate-200 p-6 shadow-sm"
               onDragOver={(e) => {
                 e.preventDefault();
@@ -572,7 +570,7 @@ const fetchDemands = useCallback(async () => {
                 
                 if (demandId && currentCategory !== section.id) {
                   await moveDemand(demandId, section.id);
-                  toast.success('Demanda movida com sucesso!');
+                  toast.success('Demanda movida!');
                 }
                 setDragOverCategory(null);
               }}
@@ -601,9 +599,6 @@ const fetchDemands = useCallback(async () => {
                 {sectionDemands.length === 0 ? (
                   <div className="text-center py-16 text-slate-400">
                     <p className="text-sm">Nenhuma demanda nesta categoria</p>
-                    {dragOverCategory === section.id && (
-                      <p className="text-sm text-sky-600 mt-2 font-semibold">↓ Solte aqui para mover ↓</p>
-                    )}
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -625,184 +620,3 @@ const fetchDemands = useCallback(async () => {
                     </AnimatePresence>
                   </div>
                 )}
-              </div>
-            </motion.div>
-          );
-        })}
-      </main>
-
-      {/* Floating Action Buttons */}
-      <div className="fixed bottom-8 left-8 z-[60]">
-        <Button
-          onClick={handleOpenCreate}
-          className="bg-sky-500 hover:bg-sky-600 text-white rounded-full px-6 py-6 shadow-lg shadow-sky-500/30 flex items-center gap-2 font-semibold transition-transform hover:scale-105 active:scale-95"
-        >
-          <Plus className="w-5 h-5" />
-          Criar Tema
-        </Button>
-      </div>
-
-      <div className="fixed bottom-8 right-8 z-[60]">
-        {!isDeleteMode ? (
-          <Button
-            onClick={() => setIsDeleteMode(true)}
-            variant="destructive"
-            className="rounded-full px-6 py-6 shadow-lg flex items-center gap-2 font-semibold transition-transform hover:scale-105 active:scale-95"
-          >
-            <Trash2 className="w-5 h-5" />
-            Excluir Tema
-          </Button>
-        ) : (
-          <div className="flex gap-3">
-            <Button
-              onClick={() => {
-                setIsDeleteMode(false);
-                setSelectedIds([]);
-              }}
-              variant="outline"
-              className="rounded-full px-6 py-6 shadow-lg"
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={deleteSelected}
-              variant="destructive"
-              className="rounded-full px-6 py-6 shadow-lg flex items-center gap-2"
-              disabled={selectedIds.length === 0}
-            >
-              <Trash2 className="w-5 h-5" />
-              Excluir ({selectedIds.length})
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Create/Edit Demand Modal */}
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingDemandId ? "Editar Demanda" : "Criar Nova Demanda"}</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="description">Descrição do Tema *</Label>
-              <Input
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Descreva o tema da demanda..."
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="priority">Prioridade *</Label>
-              <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
-                <SelectTrigger className="z-[100]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="z-[100]">
-                  <SelectItem value="alta">Prioridade Alta</SelectItem>
-                  <SelectItem value="media">Prioridade Média</SelectItem>
-                  <SelectItem value="baixa">Prioridade Baixa</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Sub-grupos (Selecione um ou mais) *</Label>
-              <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                {SUBGROUPS.map(sg => {
-                  const isSelected = formData.subgroup.includes(sg);
-                  return (
-                    <button
-                      key={sg}
-                      type="button"
-                      onClick={() => toggleSubgroupSelection(sg)}
-                      className={`text-xs px-3 py-1.5 rounded-full border transition-all flex items-center gap-1 ${
-                        isSelected 
-                          ? 'bg-[#004C97] text-white border-[#004C97] shadow-sm' 
-                          : 'bg-white text-slate-600 border-slate-200 hover:border-[#004C97]'
-                      }`}
-                    >
-                      {sg}
-                      {isSelected && <Check className="w-3 h-3" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="responsible">Responsável *</Label>
-              <Input
-                id="responsible"
-                value={formData.responsible}
-                onChange={(e) => setFormData({ ...formData, responsible: e.target.value })}
-                placeholder="Nome do responsável"
-              />
-            </div>
-            
-            {!editingDemandId && (
-              <div className="text-sm text-slate-500 bg-sky-50 p-3 rounded-lg border border-sky-200">
-                <strong>Categoria:</strong> Semana Atual (você pode mover depois arrastando)
-              </div>
-            )}
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateModal(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={saveDemand}>
-              {editingDemandId ? "Salvar alteração" : "Criar Demanda"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Presentation Mode */}
-      <AnimatePresence>
-        {presentationMode && (
-          <PresentationMode
-            demands={presentationMode.singleDemand ? null : getDemandsByCategory(presentationMode.category)}
-            categoryTitle={presentationMode.title}
-            onClose={() => setPresentationMode(null)}
-            singleDemand={presentationMode.singleDemand}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Scroll Zones */}
-      <AnimatePresence>
-        {isDragging && (
-          <>
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="fixed top-0 left-0 right-0 h-24 bg-gradient-to-b from-sky-500/90 to-sky-500/0 backdrop-blur-sm z-50 flex items-start justify-center pt-6"
-              onDragOver={() => handleScrollZoneEnter('up')}
-              onDragLeave={handleScrollZoneLeave}
-            >
-              <ChevronUp className="w-12 h-12 text-white animate-bounce" strokeWidth={3} />
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="fixed bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-sky-500/90 to-sky-500/0 backdrop-blur-sm z-50 flex items-end justify-center pb-6"
-              onDragOver={() => handleScrollZoneEnter('down')}
-              onDragLeave={handleScrollZoneLeave}
-            >
-              <ChevronDown className="w-12 h-12 text-white animate-bounce" strokeWidth={3} />
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-export default App;
