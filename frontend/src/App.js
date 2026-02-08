@@ -288,15 +288,21 @@ function App() {
     category: "this_week"
   });
 
-  const fetchDemands = useCallback(async () => {
-    try {
-      const response = await axios.get(`${API}/demands`);
-      setDemands(response.data);
-    } catch (error) {
-      console.error("Error fetching demands:", error);
-      toast.error("Erro ao carregar demandas");
-    }
-  }, []);
+const fetchDemands = useCallback(async () => {
+  try {
+    const response = await axios.get(`${API}/demands`);
+    
+    const treatedData = response.data.map(d => ({
+      ...d,
+      subgroup: typeof d.subgroup === 'string' ? d.subgroup.split(', ') : d.subgroup
+    }));
+    
+    setDemands(treatedData);
+  } catch (error) {
+    console.error("Error fetching demands:", error);
+    toast.error("Erro ao carregar demandas");
+  }
+}, []);
 
   useEffect(() => {
     fetchDemands();
