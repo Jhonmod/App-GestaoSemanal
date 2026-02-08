@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import "@/App.css";
 import { AnimatePresence, motion } from "framer-motion";
@@ -209,6 +210,7 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand }) {
         
         <div className="space-y-6">
           <div className="flex items-center gap-4">
+            <span className="text-lg text-slate-600">Prioridade:</span>
             <span className={`text-2xl font-bold ${priorityStyle.text === 'text-rose-600' ? 'text-rose-600' : priorityStyle.text === 'text-amber-600' ? 'text-amber-500' : 'text-sky-700'}`}>
               PRIORIDADE {currentDemand.priority.toUpperCase()}
             </span>
