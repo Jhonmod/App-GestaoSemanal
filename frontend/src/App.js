@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import "@/App.css";
 import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
-import { Plus, Trash2, X, ChevronLeft, ChevronRight, Presentation, Filter, GripVertical, ArrowRight, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, Trash2, X, ChevronLeft, ChevronRight, Presentation, Filter, GripVertical, ArrowRight, ChevronUp, ChevronDown, Edit2, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,6 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = "https://app-gestaosemanal-1.onrender.com/api";
 
 const PRIORITY_COLORS = {
@@ -35,7 +34,8 @@ const SUBGROUPS = [
   "BI Analytics",
   "Setor Autônomos",
   "Agendas e Incentivos",
-  "Help Desk"
+  "Help Desk",
+  "Coordenação"
 ];
 
 const SECTIONS = [
@@ -44,7 +44,7 @@ const SECTIONS = [
   { id: "stalled", title: "Temas Parados", color: "slate" }
 ];
 
-function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveTo, onOpenPresentation, onDragStart, onDragEnd }) {
+function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveTo, onOpenPresentation, onDragStart, onDragEnd, onEdit }) {
   const priorityStyle = PRIORITY_COLORS[demand.priority];
   
   const handleDragStart = (e) => {
@@ -52,7 +52,6 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
     e.dataTransfer.setData('demandId', demand.id);
     e.dataTransfer.setData('currentCategory', demand.category);
     
-    // Criar clone visual do elemento
     const dragImage = e.currentTarget.cloneNode(true);
     dragImage.style.position = 'absolute';
     dragImage.style.top = '-1000px';
@@ -63,26 +62,23 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
     document.body.appendChild(dragImage);
     e.dataTransfer.setDragImage(dragImage, e.currentTarget.offsetWidth / 2, 30);
     
-    // Remover o clone após o drag
     setTimeout(() => {
       if (document.body.contains(dragImage)) {
         document.body.removeChild(dragImage);
       }
     }, 0);
     
-    // Adicionar classe ao elemento original
     e.currentTarget.classList.add('dragging');
-    
-    // Notificar o App que drag começou
     if (onDragStart) onDragStart();
   };
   
   const handleDragEnd = (e) => {
     e.currentTarget.classList.remove('dragging');
-    
-    // Notificar o App que drag terminou
     if (onDragEnd) onDragEnd();
   };
+
+  // Garante que subgroup seja tratado como array para exibição
+  const subgroups = Array.isArray(demand.subgroup) ? demand.subgroup : [demand.subgroup];
   
   return (
     <ContextMenu modal={false}>
@@ -116,13 +112,15 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
                 <GripVertical className="w-4 h-4" />
               </div>
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex flex-wrap items-center gap-2 mb-2">
                   <span className={`text-xs font-semibold px-2 py-1 rounded ${priorityStyle.bg} ${priorityStyle.text}`}>
-                    {demand.priority.toUpperCase()}
+                    PRIORIDADE {demand.priority.toUpperCase()}
                   </span>
-                  <span className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600">
-                    {demand.subgroup}
-                  </span>
+                  {subgroups.map((sg, idx) => (
+                    <span key={idx} className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600">
+                      {sg}
+                    </span>
+                  ))}
                 </div>
                 <p className="text-sm text-slate-700 leading-relaxed mb-3">{demand.description}</p>
                 <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -135,30 +133,25 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent className="w-56">
+        <ContextMenuItem onClick={() => onEdit(demand)}>
+          <Edit2 className="w-4 h-4 mr-2" />
+          Editar Tema
+        </ContextMenuItem>
         <ContextMenuSub>
           <ContextMenuSubTrigger>
             <ArrowRight className="w-4 h-4 mr-2" />
             Mover para
           </ContextMenuSubTrigger>
           <ContextMenuSubContent>
-            <ContextMenuItem 
-              onClick={() => onMoveTo(demand.id, 'last_week')}
-              disabled={demand.category === 'last_week'}
-            >
-              Temas Resolvidos (Semana Passada)
-            </ContextMenuItem>
-            <ContextMenuItem 
-              onClick={() => onMoveTo(demand.id, 'this_week')}
-              disabled={demand.category === 'this_week'}
-            >
-              Temas da Semana Atual
-            </ContextMenuItem>
-            <ContextMenuItem 
-              onClick={() => onMoveTo(demand.id, 'stalled')}
-              disabled={demand.category === 'stalled'}
-            >
-              Temas Parados
-            </ContextMenuItem>
+            {SECTIONS.map(sec => (
+               <ContextMenuItem 
+                key={sec.id}
+                onClick={() => onMoveTo(demand.id, sec.id)}
+                disabled={demand.category === sec.id}
+              >
+                {sec.title}
+              </ContextMenuItem>
+            ))}
           </ContextMenuSubContent>
         </ContextMenuSub>
         <ContextMenuItem onClick={() => onOpenPresentation(demand)}>
@@ -172,14 +165,13 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
 
 function PresentationMode({ demands, categoryTitle, onClose, singleDemand }) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  
-  // Se é apresentação de demanda única, usar apenas essa demanda
   const demandsToShow = singleDemand ? [singleDemand] : demands;
   
   if (!demandsToShow || demandsToShow.length === 0) return null;
   
   const currentDemand = demandsToShow[currentIndex];
   const priorityStyle = PRIORITY_COLORS[currentDemand.priority];
+  const subgroups = Array.isArray(currentDemand.subgroup) ? currentDemand.subgroup : [currentDemand.subgroup];
   
   return (
     <motion.div
@@ -219,7 +211,7 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand }) {
           <div className="flex items-center gap-4">
             <span className="text-lg text-slate-600">Prioridade:</span>
             <span className={`text-2xl font-bold ${priorityStyle.text === 'text-rose-600' ? 'text-rose-600' : priorityStyle.text === 'text-amber-600' ? 'text-amber-500' : 'text-sky-700'}`}>
-              {currentDemand.priority.toUpperCase()}
+              PRIORIDADE {currentDemand.priority.toUpperCase()}
             </span>
           </div>
           
@@ -229,8 +221,12 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand }) {
           </div>
           
           <div className="flex items-center gap-4">
-            <span className="text-lg text-slate-600">Sub-grupo:</span>
-            <span className="text-xl text-slate-700">{currentDemand.subgroup}</span>
+            <span className="text-lg text-slate-600">Sub-grupos:</span>
+            <div className="flex gap-2">
+              {subgroups.map((sg, i) => (
+                <span key={i} className="text-xl text-slate-700 bg-slate-100 px-3 py-1 rounded-lg">{sg}</span>
+              ))}
+            </div>
           </div>
         </div>
         
@@ -245,7 +241,6 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand }) {
               variant="outline"
               size="lg"
               className="rounded-full"
-              data-testid="presentation-prev-button"
             >
               <ChevronLeft className="w-5 h-5" />
             </Button>
@@ -255,7 +250,6 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand }) {
               variant="outline"
               size="lg"
               className="rounded-full"
-              data-testid="presentation-next-button"
             >
               <ChevronRight className="w-5 h-5" />
             </Button>
@@ -268,7 +262,6 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand }) {
         variant="ghost"
         size="icon"
         className="absolute top-8 right-8 text-white hover:bg-white/10 rounded-full z-20"
-        data-testid="presentation-close-button"
       >
         <X className="w-6 h-6" />
       </Button>
@@ -280,6 +273,7 @@ function App() {
   const [demands, setDemands] = useState([]);
   const [filteredDemands, setFilteredDemands] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingDemandId, setEditingDemandId] = useState(null);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
   const [presentationMode, setPresentationMode] = useState(null);
@@ -290,85 +284,102 @@ function App() {
     description: "",
     priority: "media",
     responsible: "",
-    subgroup: SUBGROUPS[0],
+    subgroup: [], // Agora é um array para multiseleção
     category: "this_week"
   });
 
   const fetchDemands = useCallback(async () => {
-  try {
-    const response = await axios.get(`${API}/demands`);
-    setDemands(response.data);
-  } catch (error) {
-    console.error("Error fetching demands:", error);
-    toast.error("Erro ao carregar demandas");
-  }
-}, []);
+    try {
+      const response = await axios.get(`${API}/demands`);
+      setDemands(response.data);
+    } catch (error) {
+      console.error("Error fetching demands:", error);
+      toast.error("Erro ao carregar demandas");
+    }
+  }, []);
 
-useEffect(() => {
-  fetchDemands();
-}, [fetchDemands]);
+  useEffect(() => {
+    fetchDemands();
+  }, [fetchDemands]);
 
-const applyFilters = useCallback(() => {
-  let filtered = [...demands];
+  const applyFilters = useCallback(() => {
+    let filtered = [...demands];
 
-  if (filterPriority !== "all") {
-    filtered = filtered.filter(d => d.priority === filterPriority);
-  }
+    if (filterPriority !== "all") {
+      filtered = filtered.filter(d => d.priority === filterPriority);
+    }
 
-  if (filterSubgroup !== "all") {
-    filtered = filtered.filter(d => d.subgroup === filterSubgroup);
-  }
+    if (filterSubgroup !== "all") {
+      filtered = filtered.filter(d => {
+        const subgroups = Array.isArray(d.subgroup) ? d.subgroup : [d.subgroup];
+        return subgroups.includes(filterSubgroup);
+      });
+    }
 
-  setFilteredDemands(filtered);
-}, [demands, filterPriority, filterSubgroup]);
+    setFilteredDemands(filtered);
+  }, [demands, filterPriority, filterSubgroup]);
 
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
 
-useEffect(() => {
-  applyFilters();
-}, [applyFilters]);
+  const handleOpenCreate = () => {
+    setEditingDemandId(null);
+    setFormData({
+      description: "",
+      priority: "media",
+      responsible: "",
+      subgroup: [],
+      category: "this_week"
+    });
+    setShowCreateModal(true);
+  };
 
-    
-;
+  const handleOpenEdit = (demand) => {
+    setEditingDemandId(demand.id);
+    setFormData({
+      description: demand.description,
+      priority: demand.priority,
+      responsible: demand.responsible,
+      subgroup: Array.isArray(demand.subgroup) ? demand.subgroup : [demand.subgroup],
+      category: demand.category
+    });
+    setShowCreateModal(true);
+  };
 
-  const createDemand = async () => {
-    if (!formData.description || !formData.responsible) {
-      toast.error("Preencha todos os campos obrigatórios");
+  const saveDemand = async () => {
+    if (!formData.description || !formData.responsible || formData.subgroup.length === 0) {
+      toast.error("Preencha todos os campos obrigatórios (incluindo pelo menos um sub-grupo)");
       return;
     }
     
     try {
-      await axios.post(`${API}/demands`, formData);
-      toast.success("Demanda criada com sucesso!");
+      if (editingDemandId) {
+        await axios.put(`${API}/demands/${editingDemandId}`, formData);
+        toast.success("Demanda atualizada com sucesso!");
+      } else {
+        await axios.post(`${API}/demands`, formData);
+        toast.success("Demanda criada com sucesso!");
+      }
       setShowCreateModal(false);
-      setFormData({
-        description: "",
-        priority: "media",
-        responsible: "",
-        subgroup: SUBGROUPS[0],
-        category: "this_week"
-      });
       fetchDemands();
     } catch (error) {
-      console.error("Error creating demand:", error);
-      toast.error("Erro ao criar demanda");
+      console.error("Error saving demand:", error);
+      toast.error("Erro ao salvar demanda");
     }
   };
 
-const moveDemand = async (demandId, newCategory) => {
-    // 1. Atualização Otimista: Muda no Front antes de ir pro banco (fica instantâneo)
+  const moveDemand = async (demandId, newCategory) => {
     const originalDemands = [...demands];
     setDemands(prev => 
       prev.map(d => d.id === demandId ? { ...d, category: newCategory } : d)
     );
 
     try {
-      // 2. Salva no banco
       await axios.put(`${API}/demands/${demandId}`, { category: newCategory });
-      // toast.success("Movido!"); // Opcional, já que é visual
     } catch (error) {
       console.error("Error moving demand:", error);
       toast.error("Erro ao salvar alteração no servidor");
-      // 3. Rollback: Se der erro no banco, volta a demanda pro lugar original
       setDemands(originalDemands);
     }
   };
@@ -411,6 +422,17 @@ const moveDemand = async (demandId, newCategory) => {
     );
   };
 
+  const toggleSubgroupSelection = (sg) => {
+    setFormData(prev => {
+      const current = prev.subgroup;
+      if (current.includes(sg)) {
+        return { ...prev, subgroup: current.filter(item => item !== sg) };
+      } else {
+        return { ...prev, subgroup: [...current, sg] };
+      }
+    });
+  };
+
   const getDemandsByCategory = (category) => {
     return filteredDemands.filter(d => d.category === category);
   };
@@ -419,7 +441,6 @@ const moveDemand = async (demandId, newCategory) => {
   const [isDragging, setIsDragging] = useState(false);
   const scrollIntervalRef = useRef(null);
 
-  // Scroll suave ao passar pelas zonas
   const handleScrollZoneEnter = (direction) => {
     if (scrollIntervalRef.current) {
       clearInterval(scrollIntervalRef.current);
@@ -438,11 +459,7 @@ const moveDemand = async (demandId, newCategory) => {
     }
   };
 
-  // Handlers de drag simplificados
-  const handleDragStart = () => {
-    setIsDragging(true);
-  };
-
+  const handleDragStart = () => setIsDragging(true);
   const handleDragEnd = () => {
     setIsDragging(false);
     handleScrollZoneLeave();
@@ -461,11 +478,11 @@ const moveDemand = async (demandId, newCategory) => {
               alt="Martins Logo" 
               className="h-12 w-auto brightness-0 invert"
             />
-            <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Manrope, sans-serif' }} data-testid="app-title">
+            <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Manrope, sans-serif' }}>
               Gestão de demandas semanal
             </h1>
           </div>
-          <div className="text-lg text-white font-semibold" data-testid="team-name">Desenvolvimento de Vendas</div>
+          <div className="text-lg text-white font-semibold">Desenvolvimento de Vendas</div>
         </div>
       </header>
 
@@ -481,7 +498,7 @@ const moveDemand = async (demandId, newCategory) => {
             <div className="flex items-center gap-2">
               <Label className="text-sm text-white font-medium">Prioridade:</Label>
               <Select value={filterPriority} onValueChange={setFilterPriority}>
-                <SelectTrigger className="w-40 bg-white" data-testid="filter-priority">
+                <SelectTrigger className="w-40 bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -496,7 +513,7 @@ const moveDemand = async (demandId, newCategory) => {
             <div className="flex items-center gap-2">
               <Label className="text-sm text-white font-medium">Sub-grupo:</Label>
               <Select value={filterSubgroup} onValueChange={setFilterSubgroup}>
-                <SelectTrigger className="w-56 bg-white" data-testid="filter-subgroup">
+                <SelectTrigger className="w-56 bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -517,7 +534,6 @@ const moveDemand = async (demandId, newCategory) => {
                   setFilterSubgroup("all");
                 }}
                 className="text-white hover:bg-white/20"
-                data-testid="clear-filters-button"
               >
                 Limpar filtros
               </Button>
@@ -538,7 +554,6 @@ const moveDemand = async (demandId, newCategory) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
               className="bg-white/50 backdrop-blur-sm rounded-2xl border border-slate-200 p-6 shadow-sm"
-              data-testid={`section-${section.id}`}
               onDragOver={(e) => {
                 e.preventDefault();
                 setDragOverCategory(section.id);
@@ -566,7 +581,6 @@ const moveDemand = async (demandId, newCategory) => {
                   onClick={() => setPresentationMode({ category: section.id, title: section.title })}
                   disabled={sectionDemands.length === 0}
                   className="gap-2"
-                  data-testid={`presentation-button-${section.id}`}
                 >
                   <Presentation className="w-4 h-4" />
                   Modo apresentação
@@ -599,6 +613,7 @@ const moveDemand = async (demandId, newCategory) => {
                           onOpenPresentation={handleOpenSinglePresentation}
                           onDragStart={handleDragStart}
                           onDragEnd={handleDragEnd}
+                          onEdit={handleOpenEdit}
                         />
                       ))}
                     </AnimatePresence>
@@ -613,9 +628,8 @@ const moveDemand = async (demandId, newCategory) => {
       {/* Floating Action Buttons */}
       <div className="fixed bottom-8 left-8 z-[60]">
         <Button
-          onClick={() => setShowCreateModal(true)}
+          onClick={handleOpenCreate}
           className="bg-sky-500 hover:bg-sky-600 text-white rounded-full px-6 py-6 shadow-lg shadow-sky-500/30 flex items-center gap-2 font-semibold transition-transform hover:scale-105 active:scale-95"
-          data-testid="create-demand-button"
         >
           <Plus className="w-5 h-5" />
           Criar Tema
@@ -628,7 +642,6 @@ const moveDemand = async (demandId, newCategory) => {
             onClick={() => setIsDeleteMode(true)}
             variant="destructive"
             className="rounded-full px-6 py-6 shadow-lg flex items-center gap-2 font-semibold transition-transform hover:scale-105 active:scale-95"
-            data-testid="delete-mode-button"
           >
             <Trash2 className="w-5 h-5" />
             Excluir Tema
@@ -642,7 +655,6 @@ const moveDemand = async (demandId, newCategory) => {
               }}
               variant="outline"
               className="rounded-full px-6 py-6 shadow-lg"
-              data-testid="cancel-delete-button"
             >
               Cancelar
             </Button>
@@ -651,7 +663,6 @@ const moveDemand = async (demandId, newCategory) => {
               variant="destructive"
               className="rounded-full px-6 py-6 shadow-lg flex items-center gap-2"
               disabled={selectedIds.length === 0}
-              data-testid="confirm-delete-button"
             >
               <Trash2 className="w-5 h-5" />
               Excluir ({selectedIds.length})
@@ -660,11 +671,11 @@ const moveDemand = async (demandId, newCategory) => {
         )}
       </div>
 
-      {/* Create Demand Modal */}
+      {/* Create/Edit Demand Modal */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="sm:max-w-md" data-testid="create-demand-modal">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Criar Nova Demanda</DialogTitle>
+            <DialogTitle>{editingDemandId ? "Editar Demanda" : "Criar Nova Demanda"}</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
@@ -675,36 +686,45 @@ const moveDemand = async (demandId, newCategory) => {
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Descreva o tema da demanda..."
-                data-testid="input-description"
               />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="priority">Prioridade *</Label>
               <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
-                <SelectTrigger data-testid="input-priority" className="z-[100]">
+                <SelectTrigger className="z-[100]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="z-[100]">
-                  <SelectItem value="alta">Alta Prioridade</SelectItem>
+                  <SelectItem value="alta">Prioridade Alta</SelectItem>
                   <SelectItem value="media">Prioridade Média</SelectItem>
-                  <SelectItem value="baixa">Baixa Prioridade</SelectItem>
+                  <SelectItem value="baixa">Prioridade Baixa</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="subgroup">Sub-grupo *</Label>
-              <Select value={formData.subgroup} onValueChange={(value) => setFormData({ ...formData, subgroup: value })}>
-                <SelectTrigger data-testid="input-subgroup" className="z-[100]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="z-[100]">
-                  {SUBGROUPS.map(sg => (
-                    <SelectItem key={sg} value={sg}>{sg}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Sub-grupos (Selecione um ou mais) *</Label>
+              <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                {SUBGROUPS.map(sg => {
+                  const isSelected = formData.subgroup.includes(sg);
+                  return (
+                    <button
+                      key={sg}
+                      type="button"
+                      onClick={() => toggleSubgroupSelection(sg)}
+                      className={`text-xs px-3 py-1.5 rounded-full border transition-all flex items-center gap-1 ${
+                        isSelected 
+                          ? 'bg-[#004C97] text-white border-[#004C97] shadow-sm' 
+                          : 'bg-white text-slate-600 border-slate-200 hover:border-[#004C97]'
+                      }`}
+                    >
+                      {sg}
+                      {isSelected && <Check className="w-3 h-3" />}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -714,21 +734,22 @@ const moveDemand = async (demandId, newCategory) => {
                 value={formData.responsible}
                 onChange={(e) => setFormData({ ...formData, responsible: e.target.value })}
                 placeholder="Nome do responsável"
-                data-testid="input-responsible"
               />
             </div>
             
-            <div className="text-sm text-slate-500 bg-sky-50 p-3 rounded-lg border border-sky-200">
-              <strong>Categoria:</strong> Semana Atual (você pode mover depois arrastando)
-            </div>
+            {!editingDemandId && (
+              <div className="text-sm text-slate-500 bg-sky-50 p-3 rounded-lg border border-sky-200">
+                <strong>Categoria:</strong> Semana Atual (você pode mover depois arrastando)
+              </div>
+            )}
           </div>
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreateModal(false)}>
               Cancelar
             </Button>
-            <Button onClick={createDemand} data-testid="submit-demand-button">
-              Criar Demanda
+            <Button onClick={saveDemand}>
+              {editingDemandId ? "Salvar alteração" : "Criar Demanda"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -746,7 +767,7 @@ const moveDemand = async (demandId, newCategory) => {
         )}
       </AnimatePresence>
 
-      {/* Scroll Zones - aparecem durante drag */}
+      {/* Scroll Zones */}
       <AnimatePresence>
         {isDragging && (
           <>
