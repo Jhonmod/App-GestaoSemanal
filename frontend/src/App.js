@@ -308,27 +308,27 @@ useEffect(() => {
   fetchDemands();
 }, [fetchDemands]);
 
-
-  const applyFilters = useCallback(() => {
+const applyFilters = useCallback(() => {
   let filtered = [...demands];
 
   if (filterPriority !== "all") {
     filtered = filtered.filter(d => d.priority === filterPriority);
   }
 
+  if (filterSubgroup !== "all") {
+    filtered = filtered.filter(d => d.subgroup === filterSubgroup);
+  }
+
+  setFilteredDemands(filtered);
 }, [demands, filterPriority, filterSubgroup]);
+
 
 useEffect(() => {
   applyFilters();
 }, [applyFilters]);
 
     
-    if (filterSubgroup !== "all") {
-      filtered = filtered.filter(d => d.subgroup === filterSubgroup);
-    }
-    
-    setFilteredDemands(filtered);
-  };
+;
 
   const createDemand = async () => {
     if (!formData.description || !formData.responsible) {
