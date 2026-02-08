@@ -354,13 +354,22 @@ useEffect(() => {
     }
   };
 
-  const moveDemand = async (demandId, newCategory) => {
+const moveDemand = async (demandId, newCategory) => {
+    // 1. Atualização Otimista: Muda no Front antes de ir pro banco (fica instantâneo)
+    const originalDemands = [...demands];
+    setDemands(prev => 
+      prev.map(d => d.id === demandId ? { ...d, category: newCategory } : d)
+    );
+
     try {
+      // 2. Salva no banco
       await axios.put(`${API}/demands/${demandId}`, { category: newCategory });
-      fetchDemands();
+      // toast.success("Movido!"); // Opcional, já que é visual
     } catch (error) {
       console.error("Error moving demand:", error);
-      toast.error("Erro ao mover demanda");
+      toast.error("Erro ao salvar alteração no servidor");
+      // 3. Rollback: Se der erro no banco, volta a demanda pro lugar original
+      setDemands(originalDemands);
     }
   };
   
