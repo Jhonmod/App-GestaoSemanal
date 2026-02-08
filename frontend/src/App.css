@@ -60,3 +60,13 @@ select:focus-visible {
 html {
   scroll-behavior: auto;
 }
+
+/* Hide Emergent badge */
+#emergent-badge,
+[id*="emergent"],
+[class*="emergent-badge"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
