@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import "@/App.css";
 import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/context-menu";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API = "https://app-gestaosemanal-1.onrender.com/api";
 
 const PRIORITY_COLORS = {
   alta: { bg: "bg-rose-50", border: "border-rose-200", text: "text-rose-600", badge: "bg-rose-500" },
@@ -294,33 +294,34 @@ function App() {
     category: "this_week"
   });
 
-  useEffect(() => {
-    fetchDemands();
-  }, []);
+  const fetchDemands = useCallback(async () => {
+  try {
+    const response = await axios.get(`${API}/demands`);
+    setDemands(response.data);
+  } catch (error) {
+    console.error("Error fetching demands:", error);
+    toast.error("Erro ao carregar demandas");
+  }
+}, []);
 
-  useEffect(() => {
-    applyFilters();
-  }, [demands, filterPriority, filterSubgroup]);
+useEffect(() => {
+  fetchDemands();
+}, [fetchDemands]);
 
-  const fetchDemands = async () => {
-    try {
-      const response = await axios.get(`${API}/demands`);
-      setDemands(response.data);
-    } catch (error) {
-      console.error("Error fetching demands:", error);
-      toast.error("Erro ao carregar demandas");
-    }
-  };
 
-  const applyFilters = () => {
-    let filtered = [...demands];
-    
-    if (filterPriority !== "all") {
-      filtered = filtered.filter(d => {
-        const match = d.priority === filterPriority;
-        return match;
-      });
-    }
+  const applyFilters = useCallback(() => {
+  let filtered = [...demands];
+
+  if (filterPriority !== "all") {
+    filtered = filtered.filter(d => d.priority === filterPriority);
+  }
+
+}, [demands, filterPriority, filterSubgroup]);
+
+useEffect(() => {
+  applyFilters();
+}, [applyFilters]);
+
     
     if (filterSubgroup !== "all") {
       filtered = filtered.filter(d => d.subgroup === filterSubgroup);
