@@ -270,13 +270,12 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
           <div className="relative group bg-slate-50/80 rounded-[2rem] p-8 border border-slate-100">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Observação Detalhada</span>
-              <div className="h-[1px] flex-1 bg-slate-200"></div>
             </div>
 
             {!isEditingObs && (
               <button
                 onClick={() => setIsEditingObs(true)}
-                className="absolute top-6 right-6 p-3 text-slate-300 hover:text-sky-600 hover:bg-sky-50 rounded-xl"
+                className="absolute top-10 right-6 p-3 text-slate-300 hover:text-sky-600 hover:bg-sky-50 rounded-xl"
               >
                 <Edit2 className="w-5 h-5" />
               </button>
@@ -300,7 +299,7 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
               </div>
             ) : (
               <p className="text-2xl md:text-3xl text-slate-600 font-medium leading-relaxed italic">
-                {currentDemand.observation ? `"${currentDemand.observation}"` : "Nenhuma observação adicional registrada para este tema."}
+                {currentDemand.observation ? `${currentDemand.observation}` : "Nenhuma observação adicional registrada para este tema."}
               </p>
             )}
           </div>
