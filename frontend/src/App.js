@@ -269,7 +269,7 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
         <div className="flex-1 mb-10">
           <div className="relative group bg-slate-50/80 rounded-[2rem] p-8 border border-slate-100">
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Observação Detalhada</span>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Observação: </span>
             </div>
 
             {!isEditingObs && (
@@ -298,8 +298,8 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
                 </div>
               </div>
             ) : (
-              <p className="text-2xl md:text-3xl text-slate-600 font-medium leading-relaxed italic">
-                {currentDemand.observation ? `${currentDemand.observation}` : "Nenhuma observação adicional registrada para este tema."}
+              <p className="text-2xl md:text-3xl text-slate-400 font-medium leading-relaxed italic">
+                {currentDemand.observation ? `${currentDemand.observation}` : "Nenhuma observação."}
               </p>
             )}
           </div>
