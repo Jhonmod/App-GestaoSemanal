@@ -175,9 +175,9 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
   const [isEditingObs, setIsEditingObs] = useState(false);
   const [tempObs, setTempObs] = useState("");
   
- const demandsToShow = useMemo(() => {
-  return singleDemand ? [singleDemand] : demands;
-}, [singleDemand, demands]);
+  const demandsToShow = useMemo(() => {
+    return singleDemand ? [singleDemand] : demands;
+  }, [singleDemand, demands]);
   
   useEffect(() => {
     if (demandsToShow[currentIndex]) {
@@ -230,8 +230,23 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
             {currentDemand.description}
           </h2>
 
-          <div className="mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-100">
-            <span className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Observação</span>
+          {/* Container da Observação - Ajustado para posicionamento relativo */}
+          <div className="mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-100 relative group">
+            <span className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+              Observação
+            </span>
+
+            {/* Botão de Lápis movido para dentro do quadro, no topo direito */}
+            {!isEditingObs && (
+              <button 
+                onClick={() => setIsEditingObs(true)}
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-100 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+                title="Editar Observação"
+              >
+                <Edit2 className="w-5 h-5" />
+              </button>
+            )}
+
             {isEditingObs ? (
               <div className="space-y-3">
                 <textarea 
@@ -286,16 +301,8 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
             </div>
           </div>
         </div>
-        
-        {/* Quick Edit Pencil Icon */}
-        <button 
-          onClick={() => setIsEditingObs(true)}
-          className="absolute bottom-8 right-40 p-3 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-full transition-colors"
-          title="Editar Observação"
-        >
-          <Edit2 className="w-6 h-6" />
-        </button>
 
+        {/* Paginação e Controles de Navegação */}
         <div className="absolute bottom-8 right-8 flex items-center gap-6">
           <span className="text-slate-400 text-sm">
             {currentIndex + 1} / {demandsToShow.length}
@@ -601,8 +608,21 @@ function App() {
         </div>
       </header>
 
+      {/* Presentation Mode Modal */}
+      <AnimatePresence>
+        {presentationMode && (
+          <PresentationMode
+            demands={getDemandsByCategory(presentationMode.category)}
+            categoryTitle={presentationMode.title}
+            singleDemand={presentationMode.singleDemand}
+            onClose={() => setPresentationMode(null)}
+            onUpdateObservation={updateObservationInline}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Filters */}
-      <div className="max-w-7xl mx-auto px-6 py-6 bg-gradient-to-br from-slate-50 to-sky-50/50">
+      <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="bg-[#004C97] rounded-xl border border-[#003D7A] p-4 shadow-lg">
           <div className="flex flex-wrap items-center gap-6">
             <div className="flex items-center gap-2 text-white">
@@ -830,18 +850,21 @@ function App() {
                 placeholder="Detalhes adicionais sobre o tema..."
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="priority">Prioridade *</Label>
-                <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
-                  <SelectTrigger className="z-[100]">
+                <Label>Prioridade</Label>
+                <Select 
+                  value={formData.priority} 
+                  onValueChange={(v) => setFormData({ ...formData, priority: v })}
+                >
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="z-[100]">
-                    <SelectItem value="alta">Prioridade Alta</SelectItem>
-                    <SelectItem value="media">Prioridade Média</SelectItem>
-                    <SelectItem value="baixa">Prioridade Baixa</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="alta">Alta</SelectItem>
+                    <SelectItem value="media">Média</SelectItem>
+                    <SelectItem value="baixa">Baixa</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -856,114 +879,65 @@ function App() {
                 />
               </div>
             </div>
-            
+
             <div className="space-y-2">
-              <Label>Responsáveis (Selecione um ou mais) *</Label>
-              <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                {RESPONSIBLES_LIST.map(res => {
-                  const isSelected = formData.responsible.includes(res);
-                  return (
-                    <button
-                      key={res}
-                      type="button"
-                      onClick={() => toggleResponsibleSelection(res)}
-                      className={`text-xs px-3 py-1.5 rounded-full border transition-all flex items-center gap-1 ${
-                        isSelected 
-                          ? 'bg-sky-600 text-white border-sky-600 shadow-sm' 
-                          : 'bg-white text-slate-600 border-slate-200 hover:border-sky-600'
-                      }`}
-                    >
-                      {res}
-                      {isSelected && <Check className="w-3 h-3" />}
-                    </button>
-                  );
-                })}
+              <Label>Sub-grupos *</Label>
+              <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-slate-50">
+                {SUBGROUPS.map(sg => (
+                  <div key={sg} className="flex items-center gap-2">
+                    <Checkbox 
+                      id={`sg-${sg}`}
+                      checked={formData.subgroup.includes(sg)}
+                      onCheckedChange={() => toggleSubgroupSelection(sg)}
+                    />
+                    <label htmlFor={`sg-${sg}`} className="text-xs text-slate-600 cursor-pointer">{sg}</label>
+                  </div>
+                ))}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label>Sub-grupos (Selecione um ou mais) *</Label>
-              <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                {SUBGROUPS.map(sg => {
-                  const isSelected = formData.subgroup.includes(sg);
-                  return (
-                    <button
-                      key={sg}
-                      type="button"
-                      onClick={() => toggleSubgroupSelection(sg)}
-                      className={`text-xs px-3 py-1.5 rounded-full border transition-all flex items-center gap-1 ${
-                        isSelected 
-                          ? 'bg-[#004C97] text-white border-[#004C97] shadow-sm' 
-                          : 'bg-white text-slate-600 border-slate-200 hover:border-[#004C97]'
-                      }`}
-                    >
-                      {sg}
-                      {isSelected && <Check className="w-3 h-3" />}
-                    </button>
-                  );
-                })}
+              <Label>Responsáveis *</Label>
+              <div className="grid grid-cols-3 gap-2 p-3 border rounded-md bg-slate-50">
+                {RESPONSIBLES_LIST.map(res => (
+                  <div key={res} className="flex items-center gap-2">
+                    <Checkbox 
+                      id={`res-${res}`}
+                      checked={formData.responsible.includes(res)}
+                      onCheckedChange={() => toggleResponsibleSelection(res)}
+                    />
+                    <label htmlFor={`res-${res}`} className="text-[10px] text-slate-600 cursor-pointer">{res}</label>
+                  </div>
+                ))}
               </div>
             </div>
-            
-            {!editingDemandId && (
-              <div className="text-sm text-slate-500 bg-sky-50 p-3 rounded-lg border border-sky-200">
-                <strong>Categoria:</strong> Semana Atual (você pode mover depois arrastando)
-              </div>
-            )}
+
+            <div className="space-y-2">
+              <Label>Categoria Inicial</Label>
+              <Select 
+                value={formData.category} 
+                onValueChange={(v) => setFormData({ ...formData, category: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SECTIONS.map(sec => (
+                    <SelectItem key={sec.id} value={sec.id}>{sec.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateModal(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={saveDemand}>
-              {editingDemandId ? "Salvar alteração" : "Criar Demanda"}
+            <Button variant="outline" onClick={() => setShowCreateModal(false)}>Cancelar</Button>
+            <Button onClick={saveDemand} className="bg-sky-600 hover:bg-sky-700">
+              {editingDemandId ? "Salvar Alterações" : "Criar Tema"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Presentation Mode */}
-      <AnimatePresence>
-        {presentationMode && (
-          <PresentationMode
-            demands={presentationMode.singleDemand ? null : getDemandsByCategory(presentationMode.category)}
-            categoryTitle={presentationMode.title}
-            onClose={() => setPresentationMode(null)}
-            singleDemand={presentationMode.singleDemand}
-            onUpdateObservation={updateObservationInline}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Scroll Zones */}
-      <AnimatePresence>
-        {isDragging && (
-          <>
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="fixed top-0 left-0 right-0 h-24 bg-gradient-to-b from-sky-500/90 to-sky-500/0 backdrop-blur-sm z-50 flex items-start justify-center pt-6"
-              onDragOver={() => handleScrollZoneEnter('up')}
-              onDragLeave={handleScrollZoneLeave}
-            >
-              <ChevronUp className="w-12 h-12 text-white animate-bounce" strokeWidth={3} />
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="fixed bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-sky-500/90 to-sky-500/0 backdrop-blur-sm z-50 flex items-end justify-center pb-6"
-              onDragOver={() => handleScrollZoneEnter('down')}
-              onDragLeave={handleScrollZoneLeave}
-            >
-              <ChevronDown className="w-12 h-12 text-white animate-bounce" strokeWidth={3} />
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
