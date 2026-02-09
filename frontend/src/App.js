@@ -39,6 +39,12 @@ const SUBGROUPS = [
   "Treinamentos"
 ];
 
+const RESPONSIBLES_LIST = [
+  "Alisson", "Jhonatas", "Maria Clara", "Isabela", "Bianca", "Eduardo", 
+  "Vinicius Fontes", "Vinicius Rodovalho", "Jacyara", "Leandro", 
+  "Marcelo", "Nathalia", "Felipe"
+];
+
 const SECTIONS = [
   { id: "last_week", title: "Temas Resolvidos (Semana Passada)", color: "emerald" },
   { id: "this_week", title: "Temas da Semana Atual", color: "sky" },
@@ -78,8 +84,8 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
     if (onDragEnd) onDragEnd();
   };
 
-  // Garante que subgroup seja tratado como array para exibição
   const subgroups = Array.isArray(demand.subgroup) ? demand.subgroup : [demand.subgroup];
+  const responsibles = Array.isArray(demand.responsible) ? demand.responsible : [demand.responsible];
   
   return (
     <ContextMenu modal={false}>
@@ -125,8 +131,8 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
                 </div>
                 <p className="text-sm text-slate-700 leading-relaxed mb-3">{demand.description}</p>
                 <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <span className="font-medium">Responsável:</span>
-                  <span>{demand.responsible}</span>
+                  <span className="font-medium">Responsáveis:</span>
+                  <span>{responsibles.join(", ")}</span>
                 </div>
               </div>
             </div>
@@ -164,15 +170,30 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
   );
 }
 
-function PresentationMode({ demands, categoryTitle, onClose, singleDemand }) {
+function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpdateObservation }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isEditingObs, setIsEditingObs] = useState(false);
+  const [tempObs, setTempObs] = useState("");
+  
   const demandsToShow = singleDemand ? [singleDemand] : demands;
   
+  useEffect(() => {
+    if (demandsToShow[currentIndex]) {
+      setTempObs(demandsToShow[currentIndex].observation || "");
+    }
+  }, [currentIndex, demandsToShow]);
+
   if (!demandsToShow || demandsToShow.length === 0) return null;
   
   const currentDemand = demandsToShow[currentIndex];
   const priorityStyle = PRIORITY_COLORS[currentDemand.priority];
   const subgroups = Array.isArray(currentDemand.subgroup) ? currentDemand.subgroup : [currentDemand.subgroup];
+  const responsibles = Array.isArray(currentDemand.responsible) ? currentDemand.responsible : [currentDemand.responsible];
+
+  const handleSaveObs = async () => {
+    await onUpdateObservation(currentDemand.id, tempObs);
+    setIsEditingObs(false);
+  };
   
   return (
     <motion.div
@@ -201,35 +222,78 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand }) {
       >
         <div className={`absolute top-0 left-0 right-0 h-2 ${priorityStyle.badge}`}></div>
         
-        <div>
+        <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar">
           <div className="text-sm text-slate-500 mb-4">{categoryTitle}</div>
-          <h2 className="text-5xl font-bold text-slate-900 mb-8 leading-tight" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+          <h2 className="text-5xl font-bold text-slate-900 mb-6 leading-tight" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
             {currentDemand.description}
           </h2>
+
+          <div className="mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-100">
+            <span className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Observação</span>
+            {isEditingObs ? (
+              <div className="space-y-3">
+                <textarea 
+                  className="w-full p-3 border rounded-lg text-lg focus:ring-2 focus:ring-sky-500 outline-none"
+                  value={tempObs}
+                  onChange={(e) => setTempObs(e.target.value)}
+                  rows={3}
+                  autoFocus
+                />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleSaveObs} className="bg-emerald-600 hover:bg-emerald-700">
+                    <Check className="w-4 h-4 mr-1" /> Salvar
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setIsEditingObs(false)}>Cancelar</Button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xl text-slate-600 italic">
+                {currentDemand.observation || "Sem observações adicionais."}
+              </p>
+            )}
+          </div>
         </div>
         
-        <div className="space-y-6">
-          <div className="flex items-center gap-4">
-            <span className={`text-2xl font-bold ${priorityStyle.text === 'text-rose-600' ? 'text-rose-600' : priorityStyle.text === 'text-amber-600' ? 'text-amber-500' : 'text-sky-700'}`}>
-              PRIORIDADE {currentDemand.priority.toUpperCase()}
-            </span>
+        <div className="grid grid-cols-2 gap-8 mt-4">
+          <div className="space-y-4">
+             <div className="flex items-center gap-4">
+              <span className={`text-2xl font-bold ${priorityStyle.text === 'text-rose-600' ? 'text-rose-600' : priorityStyle.text === 'text-amber-600' ? 'text-amber-500' : 'text-sky-700'}`}>
+                PRIORIDADE {currentDemand.priority.toUpperCase()}
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <span className="text-lg text-slate-600">Responsáveis:</span>
+              <span className="text-2xl font-semibold text-slate-900">{responsibles.join(", ")}</span>
+            </div>
           </div>
-          
-          <div className="flex items-center gap-4">
-            <span className="text-lg text-slate-600">Responsável:</span>
-            <span className="text-2xl font-semibold text-slate-900">{currentDemand.responsible}</span>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <span className="text-lg text-slate-600">Sub-grupos:</span>
-            <div className="flex gap-2">
-              {subgroups.map((sg, i) => (
-                <span key={i} className="text-xl text-slate-700 bg-slate-100 px-3 py-1 rounded-lg">{sg}</span>
-              ))}
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <span className="text-lg text-slate-600">Entrega:</span>
+              <span className="text-2xl font-semibold text-slate-900">{currentDemand.deliveryDate || "Não definida"}</span>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <span className="text-lg text-slate-600">Sub-grupos:</span>
+              <div className="flex flex-wrap gap-2">
+                {subgroups.map((sg, i) => (
+                  <span key={i} className="text-lg text-slate-700 bg-slate-100 px-3 py-1 rounded-lg">{sg}</span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
         
+        {/* Quick Edit Pencil Icon */}
+        <button 
+          onClick={() => setIsEditingObs(true)}
+          className="absolute bottom-8 right-40 p-3 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-full transition-colors"
+          title="Editar Observação"
+        >
+          <Edit2 className="w-6 h-6" />
+        </button>
+
         <div className="absolute bottom-8 right-8 flex items-center gap-6">
           <span className="text-slate-400 text-sm">
             {currentIndex + 1} / {demandsToShow.length}
@@ -279,30 +343,34 @@ function App() {
   const [presentationMode, setPresentationMode] = useState(null);
   const [filterPriority, setFilterPriority] = useState("all");
   const [filterSubgroup, setFilterSubgroup] = useState("all");
+  const [filterResponsible, setFilterResponsible] = useState("all");
   
   const [formData, setFormData] = useState({
     description: "",
     priority: "media",
-    responsible: "",
-    subgroup: [], // Agora é um array para multiseleção
+    responsible: [], 
+    subgroup: [],
+    observation: "",
+    deliveryDate: "",
     category: "this_week"
   });
 
-const fetchDemands = useCallback(async () => {
-  try {
-    const response = await axios.get(`${API}/demands`);
-    
-    const treatedData = response.data.map(d => ({
-      ...d,
-      subgroup: typeof d.subgroup === 'string' ? d.subgroup.split(', ') : d.subgroup
-    }));
-    
-    setDemands(treatedData);
-  } catch (error) {
-    console.error("Error fetching demands:", error);
-    toast.error("Erro ao carregar demandas");
-  }
-}, []);
+  const fetchDemands = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API}/demands`);
+      
+      const treatedData = response.data.map(d => ({
+        ...d,
+        subgroup: typeof d.subgroup === 'string' ? d.subgroup.split(', ') : (d.subgroup || []),
+        responsible: typeof d.responsible === 'string' ? d.responsible.split(', ') : (d.responsible || [])
+      }));
+      
+      setDemands(treatedData);
+    } catch (error) {
+      console.error("Error fetching demands:", error);
+      toast.error("Erro ao carregar demandas");
+    }
+  }, []);
 
   useEffect(() => {
     fetchDemands();
@@ -322,8 +390,15 @@ const fetchDemands = useCallback(async () => {
       });
     }
 
+    if (filterResponsible !== "all") {
+      filtered = filtered.filter(d => {
+        const responsibles = Array.isArray(d.responsible) ? d.responsible : [d.responsible];
+        return responsibles.includes(filterResponsible);
+      });
+    }
+
     setFilteredDemands(filtered);
-  }, [demands, filterPriority, filterSubgroup]);
+  }, [demands, filterPriority, filterSubgroup, filterResponsible]);
 
   useEffect(() => {
     applyFilters();
@@ -334,8 +409,10 @@ const fetchDemands = useCallback(async () => {
     setFormData({
       description: "",
       priority: "media",
-      responsible: "",
+      responsible: [],
       subgroup: [],
+      observation: "",
+      deliveryDate: "",
       category: "this_week"
     });
     setShowCreateModal(true);
@@ -346,16 +423,25 @@ const fetchDemands = useCallback(async () => {
     setFormData({
       description: demand.description,
       priority: demand.priority,
-      responsible: demand.responsible,
+      responsible: Array.isArray(demand.responsible) ? demand.responsible : [demand.responsible],
       subgroup: Array.isArray(demand.subgroup) ? demand.subgroup : [demand.subgroup],
+      observation: demand.observation || "",
+      deliveryDate: demand.deliveryDate || "",
       category: demand.category
     });
     setShowCreateModal(true);
   };
 
+  const formatDataInput = (value) => {
+    const v = value.replace(/\D/g, "").slice(0, 8);
+    if (v.length >= 5) return `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4)}`;
+    if (v.length >= 3) return `${v.slice(0, 2)}/${v.slice(2)}`;
+    return v;
+  };
+
   const saveDemand = async () => {
-    if (!formData.description || !formData.responsible || formData.subgroup.length === 0) {
-      toast.error("Preencha todos os campos obrigatórios (incluindo pelo menos um sub-grupo)");
+    if (!formData.description || formData.responsible.length === 0 || formData.subgroup.length === 0 || !formData.deliveryDate) {
+      toast.error("Preencha todos os campos obrigatórios (incluindo responsáveis, sub-grupos e data de entrega)");
       return;
     }
     
@@ -372,6 +458,16 @@ const fetchDemands = useCallback(async () => {
     } catch (error) {
       console.error("Error saving demand:", error);
       toast.error("Erro ao salvar demanda");
+    }
+  };
+
+  const updateObservationInline = async (demandId, newObs) => {
+    try {
+      await axios.put(`${API}/demands/${demandId}`, { observation: newObs });
+      setDemands(prev => prev.map(d => d.id === demandId ? { ...d, observation: newObs } : d));
+      toast.success("Observação atualizada!");
+    } catch (error) {
+      toast.error("Erro ao atualizar observação");
     }
   };
 
@@ -439,6 +535,17 @@ const fetchDemands = useCallback(async () => {
     });
   };
 
+  const toggleResponsibleSelection = (resp) => {
+    setFormData(prev => {
+      const current = prev.responsible;
+      if (current.includes(resp)) {
+        return { ...prev, responsible: current.filter(item => item !== resp) };
+      } else {
+        return { ...prev, responsible: [...current, resp] };
+      }
+    });
+  };
+
   const getDemandsByCategory = (category) => {
     return filteredDemands.filter(d => d.category === category);
   };
@@ -495,7 +602,7 @@ const fetchDemands = useCallback(async () => {
       {/* Filters */}
       <div className="max-w-7xl mx-auto px-6 py-6 bg-gradient-to-br from-slate-50 to-sky-50/50">
         <div className="bg-[#004C97] rounded-xl border border-[#003D7A] p-4 shadow-lg">
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-6">
             <div className="flex items-center gap-2 text-white">
               <Filter className="w-4 h-4" />
               <span className="font-medium text-sm">Filtros:</span>
@@ -504,7 +611,7 @@ const fetchDemands = useCallback(async () => {
             <div className="flex items-center gap-2">
               <Label className="text-sm text-white font-medium">Prioridade:</Label>
               <Select value={filterPriority} onValueChange={setFilterPriority}>
-                <SelectTrigger className="w-40 bg-white">
+                <SelectTrigger className="w-32 bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -519,7 +626,7 @@ const fetchDemands = useCallback(async () => {
             <div className="flex items-center gap-2">
               <Label className="text-sm text-white font-medium">Sub-grupo:</Label>
               <Select value={filterSubgroup} onValueChange={setFilterSubgroup}>
-                <SelectTrigger className="w-56 bg-white">
+                <SelectTrigger className="w-48 bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -530,14 +637,30 @@ const fetchDemands = useCallback(async () => {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-white font-medium">Responsável:</Label>
+              <Select value={filterResponsible} onValueChange={setFilterResponsible}>
+                <SelectTrigger className="w-48 bg-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {RESPONSIBLES_LIST.map(res => (
+                    <SelectItem key={res} value={res}>{res}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             
-            {(filterPriority !== "all" || filterSubgroup !== "all") && (
+            {(filterPriority !== "all" || filterSubgroup !== "all" || filterResponsible !== "all") && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => {
                   setFilterPriority("all");
                   setFilterSubgroup("all");
+                  setFilterResponsible("all");
                 }}
                 className="text-white hover:bg-white/20"
               >
@@ -679,7 +802,7 @@ const fetchDemands = useCallback(async () => {
 
       {/* Create/Edit Demand Modal */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingDemandId ? "Editar Demanda" : "Criar Nova Demanda"}</DialogTitle>
           </DialogHeader>
@@ -694,21 +817,68 @@ const fetchDemands = useCallback(async () => {
                 placeholder="Descreva o tema da demanda..."
               />
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="priority">Prioridade *</Label>
-              <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
-                <SelectTrigger className="z-[100]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="z-[100]">
-                  <SelectItem value="alta">Prioridade Alta</SelectItem>
-                  <SelectItem value="media">Prioridade Média</SelectItem>
-                  <SelectItem value="baixa">Prioridade Baixa</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="observation">Observação</Label>
+              <textarea
+                id="observation"
+                className="w-full p-2 border rounded-md text-sm min-h-[80px] focus:ring-2 focus:ring-sky-500 outline-none"
+                value={formData.observation}
+                onChange={(e) => setFormData({ ...formData, observation: e.target.value })}
+                placeholder="Detalhes adicionais sobre o tema..."
+              />
             </div>
             
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="priority">Prioridade *</Label>
+                <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
+                  <SelectTrigger className="z-[100]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="z-[100]">
+                    <SelectItem value="alta">Prioridade Alta</SelectItem>
+                    <SelectItem value="media">Prioridade Média</SelectItem>
+                    <SelectItem value="baixa">Prioridade Baixa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="deliveryDate">Data de Entrega *</Label>
+                <Input
+                  id="deliveryDate"
+                  value={formData.deliveryDate}
+                  onChange={(e) => setFormData({ ...formData, deliveryDate: formatDataInput(e.target.value) })}
+                  placeholder="DD/MM/AAAA"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Responsáveis (Selecione um ou mais) *</Label>
+              <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                {RESPONSIBLES_LIST.map(res => {
+                  const isSelected = formData.responsible.includes(res);
+                  return (
+                    <button
+                      key={res}
+                      type="button"
+                      onClick={() => toggleResponsibleSelection(res)}
+                      className={`text-xs px-3 py-1.5 rounded-full border transition-all flex items-center gap-1 ${
+                        isSelected 
+                          ? 'bg-sky-600 text-white border-sky-600 shadow-sm' 
+                          : 'bg-white text-slate-600 border-slate-200 hover:border-sky-600'
+                      }`}
+                    >
+                      {res}
+                      {isSelected && <Check className="w-3 h-3" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label>Sub-grupos (Selecione um ou mais) *</Label>
               <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
@@ -731,16 +901,6 @@ const fetchDemands = useCallback(async () => {
                   );
                 })}
               </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="responsible">Responsável *</Label>
-              <Input
-                id="responsible"
-                value={formData.responsible}
-                onChange={(e) => setFormData({ ...formData, responsible: e.target.value })}
-                placeholder="Nome do responsável"
-              />
             </div>
             
             {!editingDemandId && (
@@ -769,6 +929,7 @@ const fetchDemands = useCallback(async () => {
             categoryTitle={presentationMode.title}
             onClose={() => setPresentationMode(null)}
             singleDemand={presentationMode.singleDemand}
+            onUpdateObservation={updateObservationInline}
           />
         )}
       </AnimatePresence>
