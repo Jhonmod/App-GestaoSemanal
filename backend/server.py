@@ -41,13 +41,15 @@ db = client[db_name]
 
 # --- MODELOS ---
 
-# Modelo para atualização (suporta mudar categoria ou qualquer outro campo na edição)
+# Modelo para atualização
 class DemandUpdate(BaseModel):
     description: Optional[str] = None
     priority: Optional[str] = None
-    responsible: Optional[str] = None
+    responsible: Optional[Union[List[str], str]] = None # Atualizado para aceitar lista
     subgroup: Optional[Union[List[str], str]] = None
     category: Optional[str] = None
+    observation: Optional[str] = None # Novo campo
+    deliveryDate: Optional[str] = None # Novo campo
 
 class BulkDeleteRequest(BaseModel):
     ids: List[str]
@@ -55,17 +57,21 @@ class BulkDeleteRequest(BaseModel):
 class DemandCreate(BaseModel):
     description: str
     priority: str
-    responsible: str
-    subgroup: Union[List[str], str] # Aceita lista do Front ou String
+    responsible: Union[List[str], str] # Atualizado para aceitar lista
+    subgroup: Union[List[str], str]
     category: str = "this_week"
+    observation: Optional[str] = "" # Novo campo
+    deliveryDate: str # Novo campo obrigatório
 
 class Demand(BaseModel):
     id: str
     description: str
     priority: str
-    responsible: str
-    subgroup: Union[List[str], str] # Retorna como string ou lista conforme o banco
+    responsible: Union[List[str], str]
+    subgroup: Union[List[str], str]
     category: str
+    observation: Optional[str] = ""
+    deliveryDate: Optional[str] = ""
     created_at: str
     updated_at: str
 
@@ -84,9 +90,13 @@ async def create_demand(demand: DemandCreate):
     
     demand_dict = demand.model_dump()
     
-    # CONVERSÃO: Se subgroup for lista, transforma em string para o banco
+    # CONVERSÃO: Subgroup (Lista para String)
     if isinstance(demand_dict['subgroup'], list):
         demand_dict['subgroup'] = ", ".join(demand_dict['subgroup'])
+    
+    # CONVERSÃO: Responsible (Lista para String)
+    if isinstance(demand_dict['responsible'], list):
+        demand_dict['responsible'] = ", ".join(demand_dict['responsible'])
         
     demand_dict.update({'id': demand_id, 'created_at': now, 'updated_at': now})
     await db.demands.insert_one(demand_dict)
@@ -96,12 +106,16 @@ async def create_demand(demand: DemandCreate):
 async def update_demand(demand_id: str, update_data: DemandUpdate):
     now = datetime.now(timezone.utc).isoformat()
     
-    # Prepara os dados para atualização
+    # Prepara os dados para atualização (remove nulos)
     update_dict = {k: v for k, v in update_data.model_dump().items() if v is not None}
     
-    # CONVERSÃO: Se subgroup estiver sendo atualizado e for lista
+    # CONVERSÃO: Se subgroup for lista
     if 'subgroup' in update_dict and isinstance(update_dict['subgroup'], list):
         update_dict['subgroup'] = ", ".join(update_dict['subgroup'])
+    
+    # CONVERSÃO: Se responsible for lista
+    if 'responsible' in update_dict and isinstance(update_dict['responsible'], list):
+        update_dict['responsible'] = ", ".join(update_dict['responsible'])
         
     update_dict["updated_at"] = now
     
