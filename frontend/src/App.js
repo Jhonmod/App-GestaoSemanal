@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import "@/App.css";
 import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
@@ -175,7 +175,9 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
   const [isEditingObs, setIsEditingObs] = useState(false);
   const [tempObs, setTempObs] = useState("");
   
-  const demandsToShow = singleDemand ? [singleDemand] : demands;
+ const demandsToShow = useMemo(() => {
+  return singleDemand ? [singleDemand] : demands;
+}, [singleDemand, demands]);
   
   useEffect(() => {
     if (demandsToShow[currentIndex]) {
