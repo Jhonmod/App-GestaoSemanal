@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import "@/App.css";
 import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
-import { Plus, Trash2, X, ChevronLeft, ChevronRight, Presentation, Filter, GripVertical, ArrowRight, ChevronUp, ChevronDown, Edit2, Check } from "lucide-react";
+import { Plus, Trash2, X, ChevronLeft, ChevronRight, Presentation, Filter, GripVertical, ArrowRight, ChevronUp, ChevronDown, Edit2, Check, Calendar, Users, Tags } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -202,45 +202,57 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-8"
+      className="fixed inset-0 z-[100] bg-slate-900/98 backdrop-blur-2xl flex items-center justify-center p-4 md:p-8"
       data-testid="presentation-mode"
     >
-      <div 
-        className="absolute inset-0 opacity-5"
-        style={{
-          backgroundImage: 'url(https://images.unsplash.com/photo-1643509324658-a75c1e05f261?crop=entropy&cs=srgb&fm=jpg&q=85)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
-      />
-      
       <motion.div
         key={currentIndex}
-        initial={{ opacity: 0, x: 100 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -100 }}
-        transition={{ duration: 0.4 }}
-        className="bg-white w-full max-w-5xl aspect-video rounded-3xl shadow-2xl p-16 flex flex-col justify-between relative overflow-hidden z-10"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="bg-white w-full max-w-6xl min-h-[85vh] md:aspect-video rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] p-8 md:p-16 flex flex-col relative overflow-hidden z-10"
       >
-        <div className={`absolute top-0 left-0 right-0 h-2 ${priorityStyle.badge}`}></div>
+        {/* Barra de Prioridade Superior */}
+        <div className={`absolute top-0 left-0 right-0 h-3 ${priorityStyle.badge} opacity-90`}></div>
         
-        <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar">
-          <div className="text-sm text-slate-500 mb-4">{categoryTitle}</div>
-          <h2 className="text-5xl font-bold text-slate-900 mb-6 leading-tight" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-            {currentDemand.description}
-          </h2>
+        {/* Header da Apresentação */}
+        <div className="flex justify-between items-start mb-10">
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+               <span className="px-4 py-1.5 rounded-full bg-slate-100 text-slate-500 text-xs font-bold uppercase tracking-widest">
+                {categoryTitle}
+              </span>
+              <span className={`px-4 py-1.5 rounded-full ${priorityStyle.bg} ${priorityStyle.text} text-xs font-bold uppercase tracking-widest border ${priorityStyle.border}`}>
+                Prioridade {currentDemand.priority}
+              </span>
+            </div>
+            <h2 className="text-4xl md:text-6xl font-extrabold text-slate-900 leading-[1.1] tracking-tight max-w-4xl" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+              {currentDemand.description}
+            </h2>
+          </div>
+          <Button
+            onClick={onClose}
+            variant="ghost"
+            size="icon"
+            className="text-slate-300 hover:text-slate-600 hover:bg-slate-100 rounded-full h-12 w-12"
+          >
+            <X className="w-8 h-8" />
+          </Button>
+        </div>
 
-          {/* Container da Observação - Ajustado para posicionamento relativo */}
-          <div className="mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-100 relative group">
-            <span className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
-              Observação
-            </span>
+        {/* Área Central: Observação */}
+        <div className="flex-1 mb-10">
+          <div className="relative group bg-slate-50/80 rounded-[2rem] p-8 border border-slate-100 transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-200/50">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Observação Detalhada</span>
+              <div className="h-[1px] flex-1 bg-slate-200"></div>
+            </div>
 
-            {/* Botão de Lápis movido para dentro do quadro, no topo direito */}
             {!isEditingObs && (
               <button 
                 onClick={() => setIsEditingObs(true)}
-                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-100 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+                className="absolute top-6 right-6 p-3 text-slate-300 hover:text-sky-600 hover:bg-sky-50 rounded-xl transition-all opacity-0 group-hover:opacity-100 border border-transparent hover:border-sky-100"
                 title="Editar Observação"
               >
                 <Edit2 className="w-5 h-5" />
@@ -248,96 +260,101 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
             )}
 
             {isEditingObs ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <textarea 
-                  className="w-full p-3 border rounded-lg text-lg focus:ring-2 focus:ring-sky-500 outline-none"
+                  className="w-full p-6 bg-white border-2 border-sky-100 rounded-2xl text-xl text-slate-700 focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 outline-none transition-all min-h-[150px]"
                   value={tempObs}
                   onChange={(e) => setTempObs(e.target.value)}
-                  rows={3}
                   autoFocus
                 />
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleSaveObs} className="bg-emerald-600 hover:bg-emerald-700">
-                    <Check className="w-4 h-4 mr-1" /> Salvar
+                <div className="flex gap-3 justify-end">
+                  <Button onClick={handleSaveObs} className="bg-sky-600 hover:bg-sky-700 px-8 py-6 rounded-2xl text-lg">
+                    <Check className="w-5 h-5 mr-2" /> Salvar Alterações
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setIsEditingObs(false)}>Cancelar</Button>
+                  <Button variant="ghost" onClick={() => setIsEditingObs(false)} className="px-8 py-6 rounded-2xl text-lg">Cancelar</Button>
                 </div>
               </div>
             ) : (
-              <p className="text-xl text-slate-600 italic">
-                {currentDemand.observation || "Sem observações adicionais."}
+              <p className="text-2xl md:text-3xl text-slate-600 font-medium leading-relaxed italic">
+                {currentDemand.observation ? `"${currentDemand.observation}"` : "Nenhuma observação adicional registrada para este tema."}
               </p>
             )}
           </div>
         </div>
         
-        <div className="grid grid-cols-2 gap-8 mt-4">
-          <div className="space-y-4">
-             <div className="flex items-center gap-4">
-              <span className={`text-2xl font-bold ${priorityStyle.text === 'text-rose-600' ? 'text-rose-600' : priorityStyle.text === 'text-amber-600' ? 'text-amber-500' : 'text-sky-700'}`}>
-                PRIORIDADE {currentDemand.priority.toUpperCase()}
-              </span>
+        {/* Rodapé: Grid de Informações */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card Responsáveis */}
+          <div className="p-6 bg-white rounded-[1.5rem] border border-slate-100 shadow-sm flex items-start gap-4 transition-transform hover:-translate-y-1">
+            <div className="p-3 bg-sky-50 rounded-xl text-sky-600">
+              <Users className="w-6 h-6" />
             </div>
-            
-            <div className="flex items-center gap-4">
-              <span className="text-lg text-slate-600">Responsáveis:</span>
-              <span className="text-2xl font-semibold text-slate-900">{responsibles.join(", ")}</span>
+            <div>
+              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Responsáveis</span>
+              <p className="text-lg font-bold text-slate-800 leading-tight">
+                {responsibles.join(", ")}
+              </p>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <span className="text-lg text-slate-600">Entrega:</span>
-              <span className="text-2xl font-semibold text-slate-900">{currentDemand.deliveryDate || "Não definida"}</span>
+          {/* Card Entrega */}
+          <div className="p-6 bg-white rounded-[1.5rem] border border-slate-100 shadow-sm flex items-start gap-4 transition-transform hover:-translate-y-1">
+            <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600">
+              <Calendar className="w-6 h-6" />
             </div>
-            
-            <div className="flex items-center gap-4">
-              <span className="text-lg text-slate-600">Sub-grupos:</span>
-              <div className="flex flex-wrap gap-2">
+            <div>
+              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Previsão de Entrega</span>
+              <p className="text-lg font-bold text-slate-800">
+                {currentDemand.deliveryDate || "A definir"}
+              </p>
+            </div>
+          </div>
+
+          {/* Card Sub-grupos */}
+          <div className="p-6 bg-white rounded-[1.5rem] border border-slate-100 shadow-sm flex items-start gap-4 transition-transform hover:-translate-y-1">
+            <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600">
+              <Tags className="w-6 h-6" />
+            </div>
+            <div className="flex-1">
+              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Áreas Envolvidas</span>
+              <div className="flex flex-wrap gap-1.5 mt-2">
                 {subgroups.map((sg, i) => (
-                  <span key={i} className="text-lg text-slate-700 bg-slate-100 px-3 py-1 rounded-lg">{sg}</span>
+                  <span key={i} className="px-2.5 py-1 text-[11px] font-bold bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-100">
+                    {sg}
+                  </span>
                 ))}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Paginação e Controles de Navegação */}
-        <div className="absolute bottom-8 right-8 flex items-center gap-6">
-          <span className="text-slate-400 text-sm">
-            {currentIndex + 1} / {demandsToShow.length}
+        {/* Paginação Estilizada */}
+        <div className="absolute bottom-10 right-10 flex items-center gap-6 bg-slate-50/50 p-2 rounded-full border border-slate-100">
+          <span className="pl-6 text-slate-400 text-sm font-bold tracking-tighter">
+             ITEM <span className="text-slate-900">{currentIndex + 1}</span> DE {demandsToShow.length}
           </span>
-          <div className="flex gap-3">
+          <div className="flex gap-1">
             <Button
               onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
               disabled={currentIndex === 0}
-              variant="outline"
-              size="lg"
-              className="rounded-full"
+              variant="ghost"
+              size="icon"
+              className="rounded-full h-12 w-12 hover:bg-white hover:shadow-md disabled:opacity-20"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-6 h-6" />
             </Button>
             <Button
               onClick={() => setCurrentIndex(Math.min(demandsToShow.length - 1, currentIndex + 1))}
               disabled={currentIndex === demandsToShow.length - 1}
-              variant="outline"
-              size="lg"
-              className="rounded-full"
+              variant="ghost"
+              size="icon"
+              className="rounded-full h-12 w-12 hover:bg-white hover:shadow-md disabled:opacity-20"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-6 h-6" />
             </Button>
           </div>
         </div>
       </motion.div>
-      
-      <Button
-        onClick={onClose}
-        variant="ghost"
-        size="icon"
-        className="absolute top-8 right-8 text-white hover:bg-white/10 rounded-full z-20"
-      >
-        <X className="w-6 h-6" />
-      </Button>
     </motion.div>
   );
 }
