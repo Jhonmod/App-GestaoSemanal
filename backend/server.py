@@ -77,6 +77,10 @@ class Demand(BaseModel):
 
 api_router = APIRouter(prefix="/api")
 
+@app.get("/")
+async def health_check():
+    return {"status": "ok"}
+
 @api_router.get("/demands", response_model=List[Demand])
 async def get_demands():
     demands = await db.demands.find({}, {"_id": 0}).to_list(1000)
