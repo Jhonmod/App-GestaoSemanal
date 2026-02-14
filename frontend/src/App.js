@@ -882,7 +882,7 @@ const fetchDemands = useCallback(async () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="deliveryDate">Data de Entrega *</Label>
+                <Label htmlFor="deliveryDate">Data de Entrega</Label>
                 <Input
                   id="deliveryDate"
                   value={formData.deliveryDate}
