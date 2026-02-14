@@ -461,8 +461,8 @@ const fetchDemands = useCallback(async () => {
   };
 
   const saveDemand = async () => {
-    if (!formData.description || formData.responsible.length === 0 || formData.subgroup.length === 0 || !formData.deliveryDate) {
-      toast.error("Preencha todos os campos obrigatórios (incluindo responsáveis, sub-grupos e data de entrega)");
+    if (!formData.description || formData.responsible.length === 0 || formData.subgroup.length === 0) {
+      toast.error("Preencha todos os campos obrigatórios (incluindo responsáveis e sub-grupos)");
       return;
     }
     
