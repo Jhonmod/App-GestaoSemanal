@@ -51,6 +51,27 @@ const SECTIONS = [
   { id: "stalled", title: "Temas Parados", color: "slate" }
 ];
 
+const getWeekInfo = () => {
+  const today = new Date();
+
+  // ISO week date calculation
+  const tempDate = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+  const dayNum = tempDate.getUTCDay() || 7;
+  tempDate.setUTCDate(tempDate.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(tempDate.getUTCFullYear(), 0, 1));
+  const weekNumber = Math.ceil((((tempDate - yearStart) / 86400000) + 1) / 7);
+
+  // Total weeks in year
+  const lastDayOfYear = new Date(today.getFullYear(), 11, 31);
+  const totalWeeks = lastDayOfYear.getDay() === 4 || lastDayOfYear.getDay() === 3 ? 53 : 52;
+
+  return {
+    week: weekNumber,
+    total: totalWeeks
+  };
+};
+
+
 /* ===========================
    DEMAND CARD (SEM ALTERAÇÃO)
 =========================== */
@@ -365,6 +386,8 @@ function App() {
   const [filterPriority, setFilterPriority] = useState("all");
   const [filterSubgroup, setFilterSubgroup] = useState("all");
   const [filterResponsible, setFilterResponsible] = useState("all");
+  const { week, total } = useMemo(() => getWeekInfo(), []);
+
 
   const [formData, setFormData] = useState({
     description: "",
@@ -603,22 +626,38 @@ const fetchDemands = useCallback(async () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-50/50" style={{ fontFamily: 'Inter, sans-serif' }}>
       <Toaster position="top-right" />
       
-      {/* Header */}
-      <header className="bg-[#004C97] border-b border-[#003D7A] sticky top-0 z-40 shadow-lg">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <img 
-              src="https://customer-assets.emergentagent.com/job_kanban-vendas/artifacts/dagja3ws_ChatGPT%20Image%207%20de%20fev.%20de%202026%2C%2016_51_34.png" 
-              alt="Martins Logo" 
-              className="h-12 w-auto brightness-0 invert"
-            />
-            <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Manrope, sans-serif' }}>
-              Gestão de demandas semanal
-            </h1>
-          </div>
-          <div className="text-lg text-white font-semibold">Desenvolvimento de Vendas</div>
-        </div>
-      </header>
+{/* Header */}
+<header className="bg-[#004C97] border-b border-[#003D7A] sticky top-0 z-40 shadow-lg">
+  <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+
+    {/* ESQUERDA */}
+    <div className="flex items-center gap-4">
+      <img 
+        src="https://customer-assets.emergentagent.com/job_kanban-vendas/artifacts/dagja3ws_ChatGPT%20Image%207%20de%20fev.%20de%202026%2C%2016_51_34.png" 
+        alt="Martins Logo" 
+        className="h-12 w-auto brightness-0 invert"
+      />
+      <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Manrope, sans-serif' }}>
+        Gestão de Demandas Semanal
+      </h1>
+    </div>
+
+    {/* DIREITA */}
+    <div className="flex items-center gap-3 text-white">
+      <span className="text-lg font-semibold">
+        Desenvolvimento de Vendas
+      </span>
+
+      <span className="h-4 w-px bg-white/40"></span>
+
+      <span className="text-sm font-medium opacity-80 tracking-wide">
+        Semana {week} de {total}
+      </span>
+    </div>
+
+  </div>
+</header>
+
 
       {/* Presentation Mode Modal */}
       <AnimatePresence>
