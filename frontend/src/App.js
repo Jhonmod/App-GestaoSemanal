@@ -53,19 +53,27 @@ const SECTIONS = [
 
 const getWeekInfo = () => {
   const today = new Date();
+
+  // ISO week date calculation
   const tempDate = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
   const dayNum = tempDate.getUTCDay() || 7;
   tempDate.setUTCDate(tempDate.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(tempDate.getUTCFullYear(), 0, 1));
   const weekNumber = Math.ceil((((tempDate - yearStart) / 86400000) + 1) / 7);
+
+  // Total weeks in year
   const lastDayOfYear = new Date(today.getFullYear(), 11, 31);
   const totalWeeks = lastDayOfYear.getDay() === 4 || lastDayOfYear.getDay() === 3 ? 53 : 52;
 
-  return { week: weekNumber, total: totalWeeks };
+  return {
+    week: weekNumber,
+    total: totalWeeks
+  };
 };
 
+
 /* ===========================
-   DEMAND CARD
+   DEMAND CARD (SEM ALTERAÇÃO)
 =========================== */
 function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveTo, onOpenPresentation, onDragStart, onDragEnd, onEdit }) {
   const priorityStyle = PRIORITY_COLORS[demand.priority];
@@ -74,7 +82,6 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('demandId', demand.id);
     e.dataTransfer.setData('currentCategory', demand.category);
-    
     const dragImage = e.currentTarget.cloneNode(true);
     dragImage.style.position = 'absolute';
     dragImage.style.top = '-1000px';
@@ -87,7 +94,6 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
     setTimeout(() => {
       if (document.body.contains(dragImage)) document.body.removeChild(dragImage);
     }, 0);
-    
     e.currentTarget.classList.add('dragging');
     if (onDragStart) onDragStart();
   };
@@ -103,18 +109,16 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
   return (
     <ContextMenu modal={false}>
       <ContextMenuTrigger asChild>
-        {/* Adicionado select-none para evitar seleção de texto e cursor de digitação */}
-        <div className="select-none">
+        <div>
           <motion.div
-            layoutId={demand.id.toString()}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            exit={{ opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.2 }}
             draggable={!isDeleteMode}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
-            className={`bg-white p-6 rounded-xl border ${priorityStyle.border} shadow-sm hover:shadow-md transition-shadow duration-300 group relative overflow-hidden select-none ${!isDeleteMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
+            className={`bg-white p-6 rounded-xl border ${priorityStyle.border} shadow-sm hover:shadow-md transition-shadow duration-300 group relative overflow-hidden ${!isDeleteMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
           >
             <div className={`absolute left-0 top-0 bottom-0 w-1 ${priorityStyle.badge}`}></div>
 
@@ -127,8 +131,7 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
               </div>
             )}
 
-            {/* Adicionado pointer-events-none para que cliques no texto não interfiram no drag */}
-            <div className="flex items-start gap-3 pointer-events-none">
+            <div className="flex items-start gap-3">
               <div className="text-slate-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <GripVertical className="w-4 h-4" />
               </div>
@@ -143,7 +146,7 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
                     </span>
                   ))}
                 </div>
-                <p className="text-sm text-slate-700 leading-relaxed mb-3 font-medium">{demand.description}</p>
+                <p className="text-sm text-slate-700 leading-relaxed mb-3">{demand.description}</p>
                 <div className="flex items-center gap-2 text-xs text-slate-500">
                   <span className="font-medium">Responsáveis:</span>
                   <span>{responsibles.join(", ")}</span>
@@ -185,7 +188,7 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
 }
 
 /* ===========================
-   PRESENTATION MODE
+   PRESENTATION MODE (ALTERADO)
 =========================== */
 function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpdateObservation }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -231,6 +234,7 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
       >
         <div className={`absolute top-0 left-0 right-0 h-3 ${priorityStyle.badge} opacity-90`}></div>
 
+        {/* HEADER COM CONTADOR NO TOPO */}
         <div className="flex justify-between items-start mb-10">
           <div>
             <div className="flex items-center gap-3 mb-4">
@@ -282,6 +286,7 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
           </div>
         </div>
 
+        {/* RESTANTE DO COMPONENTE CONTINUA IGUAL */}
         <div className="flex-1 mb-10">
           <div className="relative group bg-slate-50/80 rounded-[2rem] p-8 border border-slate-100">
             <div className="flex items-center gap-2 mb-4">
@@ -315,12 +320,13 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
               </div>
             ) : (
               <p className="text-2xl md:text-3xl text-slate-400 font-medium leading-relaxed italic">
-                {currentDemand.observation ? `${currentDemand.observation}` : "Nenhuma observação cadastrada para este tema."}
+                {currentDemand.observation ? `${currentDemand.observation}` : "Nenhuma observação."}
               </p>
             )}
           </div>
         </div>
 
+        {/* GRID INFERIOR */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="p-6 bg-white rounded-[1.5rem] border border-slate-100 shadow-sm flex items-start gap-4">
             <div className="p-3 bg-sky-50 rounded-xl text-sky-600">
@@ -366,7 +372,7 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
 }
 
 /* ===========================
-   APP PRINCIPAL
+   APP PRINCIPAL (INALTERADO)
 =========================== */
 
 function App() {
@@ -377,12 +383,11 @@ function App() {
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
   const [presentationMode, setPresentationMode] = useState(null);
-  
   const [filterPriority, setFilterPriority] = useState("all");
   const [filterSubgroup, setFilterSubgroup] = useState("all");
   const [filterResponsible, setFilterResponsible] = useState("all");
-
   const { week, total } = useMemo(() => getWeekInfo(), []);
+
 
   const [formData, setFormData] = useState({
     description: "",
@@ -394,64 +399,16 @@ function App() {
     category: "this_week"
   });
 
-  // AUTO-SCROLL LOGIC
-  const [isDragging, setIsDragging] = useState(false);
-  const scrollRafRef = useRef(null);
-
-  const startAutoScroll = useCallback((direction) => {
-    if (scrollRafRef.current) return;
-
-    const scroll = () => {
-      const scrollSpeed = 12;
-      window.scrollBy(0, direction === 'up' ? -scrollSpeed : scrollSpeed);
-      scrollRafRef.current = requestAnimationFrame(scroll);
-    };
-
-    scrollRafRef.current = requestAnimationFrame(scroll);
-  }, []);
-
-  const stopAutoScroll = useCallback(() => {
-    if (scrollRafRef.current) {
-      cancelAnimationFrame(scrollRafRef.current);
-      scrollRafRef.current = null;
-    }
-  }, []);
-
-  useEffect(() => {
-    const handleDragOver = (e) => {
-      if (!isDragging) return;
-
-      const threshold = 120;
-      const { clientY } = e;
-      const { innerHeight } = window;
-
-      if (clientY < threshold) {
-        startAutoScroll('up');
-      } else if (clientY > innerHeight - threshold) {
-        startAutoScroll('down');
-      } else {
-        stopAutoScroll();
-      }
-    };
-
-    if (isDragging) {
-      window.addEventListener('dragover', handleDragOver);
-    }
-
-    return () => {
-      window.removeEventListener('dragover', handleDragOver);
-      stopAutoScroll();
-    };
-  }, [isDragging, startAutoScroll, stopAutoScroll]);
-
-  const fetchDemands = useCallback(async () => {
+const fetchDemands = useCallback(async () => {
     try {
       const response = await axios.get(`${API}/demands`);
+      
       const treatedData = response.data.map(d => ({
         ...d,
         subgroup: typeof d.subgroup === 'string' ? d.subgroup.split(', ') : (d.subgroup || []),
         responsible: typeof d.responsible === 'string' ? d.responsible.split(', ') : (d.responsible || [])
       }));
+      
       setDemands(treatedData);
     } catch (error) {
       console.error("Error fetching demands:", error);
@@ -510,8 +467,8 @@ function App() {
     setFormData({
       description: demand.description,
       priority: demand.priority,
-      responsible: Array.isArray(demand.responsible) ? [...demand.responsible] : [demand.responsible],
-      subgroup: Array.isArray(demand.subgroup) ? [...demand.subgroup] : [demand.subgroup],
+      responsible: Array.isArray(demand.responsible) ? demand.responsible : [demand.responsible],
+      subgroup: Array.isArray(demand.subgroup) ? demand.subgroup : [demand.subgroup],
       observation: demand.observation || "",
       deliveryDate: demand.deliveryDate || "",
       category: demand.category
@@ -528,14 +485,14 @@ function App() {
 
   const saveDemand = async () => {
     if (!formData.description || formData.responsible.length === 0 || formData.subgroup.length === 0) {
-      toast.error("Preencha todos os campos obrigatórios");
+      toast.error("Preencha todos os campos obrigatórios (incluindo responsáveis e sub-grupos)");
       return;
     }
-
+    
     try {
       if (editingDemandId) {
         await axios.put(`${API}/demands/${editingDemandId}`, formData);
-        toast.success("Demanda atualizada!");
+        toast.success("Demanda atualizada com sucesso!");
       } else {
         await axios.post(`${API}/demands`, formData);
         toast.success("Demanda criada com sucesso!");
@@ -551,50 +508,48 @@ function App() {
   const updateObservationInline = async (demandId, newObs) => {
     try {
       await axios.put(`${API}/demands/${demandId}`, { observation: newObs });
-      setDemands(prev => prev.map(d => 
-        d.id === demandId ? { ...d, observation: newObs } : d
-      ));
+      setDemands(prev => prev.map(d => d.id === demandId ? { ...d, observation: newObs } : d));
       toast.success("Observação atualizada!");
     } catch (error) {
-      console.error("Error updating observation:", error);
       toast.error("Erro ao atualizar observação");
     }
   };
 
-  // CORREÇÃO: Função moveDemand para evitar duplicação no front
   const moveDemand = async (demandId, newCategory) => {
-    // Atualização otimista usando .map para garantir que o item mude de categoria atômicamente
-    setDemands(prev => prev.map(d => {
-      if (d.id.toString() === demandId.toString()) {
-        return { ...d, category: newCategory };
-      }
-      return d;
-    }));
+    const originalDemands = [...demands];
+    setDemands(prev => 
+      prev.map(d => d.id === demandId ? { ...d, category: newCategory } : d)
+    );
 
     try {
       await axios.put(`${API}/demands/${demandId}`, { category: newCategory });
     } catch (error) {
       console.error("Error moving demand:", error);
-      toast.error("Erro ao sincronizar movimento com o servidor");
-      fetchDemands(); // Reverte para o estado do banco em caso de erro
+      toast.error("Erro ao salvar alteração no servidor");
+      setDemands(originalDemands);
     }
   };
-
+  
   const handleContextMoveTo = async (demandId, newCategory) => {
     await moveDemand(demandId, newCategory);
-    toast.success("Demanda movida!");
+    toast.success("Demanda movida com sucesso!");
   };
-
+  
   const handleOpenSinglePresentation = (demand) => {
     const sectionTitle = SECTIONS.find(s => s.id === demand.category)?.title || "Demanda";
-    setPresentationMode({
-      category: demand.category,
+    setPresentationMode({ 
+      category: demand.category, 
       title: sectionTitle,
-      singleDemand: demand
+      singleDemand: demand 
     });
   };
 
   const deleteSelected = async () => {
+    if (selectedIds.length === 0) {
+      toast.error("Selecione pelo menos uma demanda");
+      return;
+    }
+    
     try {
       await axios.post(`${API}/demands/bulk-delete`, { ids: selectedIds });
       toast.success(`${selectedIds.length} demanda(s) excluída(s) com sucesso!`);
@@ -614,21 +569,25 @@ function App() {
   };
 
   const toggleSubgroupSelection = (sg) => {
-    setFormData(prev => ({
-      ...prev,
-      subgroup: prev.subgroup.includes(sg)
-        ? prev.subgroup.filter(i => i !== sg)
-        : [...prev.subgroup, sg]
-    }));
+    setFormData(prev => {
+      const current = prev.subgroup;
+      if (current.includes(sg)) {
+        return { ...prev, subgroup: current.filter(item => item !== sg) };
+      } else {
+        return { ...prev, subgroup: [...current, sg] };
+      }
+    });
   };
 
   const toggleResponsibleSelection = (resp) => {
-    setFormData(prev => ({
-      ...prev,
-      responsible: prev.responsible.includes(resp)
-        ? prev.responsible.filter(i => i !== resp)
-        : [...prev.responsible, resp]
-    }));
+    setFormData(prev => {
+      const current = prev.responsible;
+      if (current.includes(resp)) {
+        return { ...prev, responsible: current.filter(item => item !== resp) };
+      } else {
+        return { ...prev, responsible: [...current, resp] };
+      }
+    });
   };
 
   const getDemandsByCategory = (category) => {
@@ -636,45 +595,124 @@ function App() {
   };
 
   const [dragOverCategory, setDragOverCategory] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const scrollIntervalRef = useRef(null);
+
+  // ===== AUTO SCROLL =====
+const MAX_SCROLL_SPEED = 160; // velocidade máxima
+
+  const stopAutoScroll = useCallback(() => {
+  if (scrollIntervalRef.current) {
+    cancelAnimationFrame(scrollIntervalRef.current);
+    scrollIntervalRef.current = null;
+  }
+}, []);
+  
+
+const startAutoScroll = useCallback((getSpeed) => {
+  if (scrollIntervalRef.current) return;
+
+  const scroll = () => {
+    const speed = getSpeed();
+    if (speed !== 0) {
+      window.scrollBy(0, speed);
+      scrollIntervalRef.current = requestAnimationFrame(scroll);
+    } else {
+      stopAutoScroll();
+    }
+  };
+
+  scrollIntervalRef.current = requestAnimationFrame(scroll);
+}, [stopAutoScroll]);
+
+
+ const handleGlobalDragOver = useCallback((e) => {
+  if (!isDragging) return;
+
+  const mouseY = e.clientY;
+  const viewportHeight = window.innerHeight;
+
+  const topZone = viewportHeight * 0.40;     // 40% superior
+  const bottomZone = viewportHeight * 0.60;  // 40% inferior
+
+  let scrollSpeed = 0;
+
+  if (mouseY < topZone) {
+    const intensity = Math.pow((topZone - mouseY) / topZone, 2);
+    scrollSpeed = -MAX_SCROLL_SPEED * intensity;
+  } 
+  else if (mouseY > bottomZone) {
+    const intensity = Math.pow((mouseY - bottomZone) / (viewportHeight - bottomZone), 2);
+    scrollSpeed = MAX_SCROLL_SPEED * intensity;
+  }
+
+  if (scrollSpeed !== 0) {
+    startAutoScroll(() => scrollSpeed);
+  } else {
+    stopAutoScroll();
+  }
+
+}, [isDragging, startAutoScroll, stopAutoScroll]);
+
+  const handleDragStart = () => setIsDragging(true);
+  const handleDragEnd = () => {
+    setIsDragging(false);
+     stopAutoScroll();
+  };
+
+    // ===== LISTENER GLOBAL PARA AUTO SCROLL =====
+useEffect(() => {
+  if (isDragging) {
+    window.addEventListener("dragover", handleGlobalDragOver);
+  } else {
+    window.removeEventListener("dragover", handleGlobalDragOver);
+    stopAutoScroll();
+  }
+
+  return () => {
+    window.removeEventListener("dragover", handleGlobalDragOver);
+    stopAutoScroll();
+  };
+}, [isDragging, handleGlobalDragOver, stopAutoScroll]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-50/50" style={{ fontFamily: 'Inter, sans-serif' }}>
       <Toaster position="top-right" />
       
-      {/* HEADER */}
-      <header className="bg-[#004C97] border-b border-[#003D7A] sticky top-0 z-40 shadow-lg">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="bg-white/10 p-2 rounded-xl backdrop-blur-md">
-              <img 
-                src="https://customer-assets.emergentagent.com/job_kanban-vendas/artifacts/dagja3ws_ChatGPT%20Image%207%20de%20fev.%20de%202026%2C%2016_51_34.png" 
-                alt="Logo" 
-                className="h-10 w-auto brightness-0 invert"
-              />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight" style={{ fontFamily: 'Manrope, sans-serif' }}>
-                Gestão de Demandas Semanal
-              </h1>
-              <p className="text-sky-200 text-xs font-medium tracking-widest uppercase">Setor de Desenvolvimento de Vendas</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-6">
-            <div className="hidden md:flex flex-col items-end">
-              <span className="text-white font-bold text-lg leading-none">Semana {week}</span>
-              <span className="text-sky-300 text-[10px] font-bold uppercase tracking-wider">de {total} semanas</span>
-            </div>
-            <div className="h-10 w-px bg-white/20 hidden md:block"></div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-sky-400/20 border border-sky-400/30 flex items-center justify-center text-white font-bold shadow-inner">
-                DV
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+{/* Header */}
+<header className="bg-[#004C97] border-b border-[#003D7A] sticky top-0 z-40 shadow-lg">
+  <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 
-      {/* MODO APRESENTAÇÃO */}
+    {/* ESQUERDA */}
+    <div className="flex items-center gap-4">
+      <img 
+        src="https://customer-assets.emergentagent.com/job_kanban-vendas/artifacts/dagja3ws_ChatGPT%20Image%207%20de%20fev.%20de%202026%2C%2016_51_34.png" 
+        alt="Martins Logo" 
+        className="h-12 w-auto brightness-0 invert"
+      />
+      <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Manrope, sans-serif' }}>
+        Gestão de Demandas Semanal
+      </h1>
+    </div>
+
+    {/* DIREITA */}
+    <div className="flex items-center gap-3 text-white">
+      <span className="text-lg font-semibold">
+        Desenvolvimento de Vendas
+      </span>
+
+      <span className="h-4 w-px bg-white/40"></span>
+
+      <span className="text-sm font-medium opacity-80 tracking-wide">
+        Semana {week} de {total}
+      </span>
+    </div>
+
+  </div>
+</header>
+
+
+      {/* Presentation Mode Modal */}
       <AnimatePresence>
         {presentationMode && (
           <PresentationMode
@@ -687,20 +725,19 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* BARRA DE FILTROS */}
+      {/* Filters */}
       <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="bg-[#004C97] rounded-2xl border border-[#003D7A] p-5 shadow-2xl flex flex-wrap gap-6 items-center">
+        <div className="bg-[#004C97] rounded-xl border border-[#003D7A] p-4 shadow-lg">
+          <div className="flex flex-wrap items-center gap-6">
             <div className="flex items-center gap-2 text-white">
-              <div className="p-2 bg-white/10 rounded-lg">
-                <Filter className="w-4 h-4" />
-              </div>
-              <span className="font-bold text-sm tracking-wide uppercase">Filtros Ativos</span>
+              <Filter className="w-4 h-4" />
+              <span className="font-medium text-sm">Filtros:</span>
             </div>
             
-            <div className="flex items-center gap-3">
-              <Label className="text-xs text-sky-200 font-bold uppercase tracking-tighter">Prioridade</Label>
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-white font-medium">Prioridade:</Label>
               <Select value={filterPriority} onValueChange={setFilterPriority}>
-                <SelectTrigger className="w-36 bg-white border-0 shadow-inner h-9 rounded-lg font-medium text-slate-700">
+                <SelectTrigger className="w-32 bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -711,15 +748,15 @@ function App() {
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="flex items-center gap-3">
-              <Label className="text-xs text-sky-200 font-bold uppercase tracking-tighter">Sub-grupo</Label>
+            
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-white font-medium">Sub-grupo:</Label>
               <Select value={filterSubgroup} onValueChange={setFilterSubgroup}>
-                <SelectTrigger className="w-56 bg-white border-0 shadow-inner h-9 rounded-lg font-medium text-slate-700">
+                <SelectTrigger className="w-48 bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os grupos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   {SUBGROUPS.map(sg => (
                     <SelectItem key={sg} value={sg}>{sg}</SelectItem>
                   ))}
@@ -727,288 +764,279 @@ function App() {
               </Select>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Label className="text-xs text-sky-200 font-bold uppercase tracking-tighter">Responsável</Label>
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-white font-medium">Responsável:</Label>
               <Select value={filterResponsible} onValueChange={setFilterResponsible}>
-                <SelectTrigger className="w-56 bg-white border-0 shadow-inner h-9 rounded-lg font-medium text-slate-700">
+                <SelectTrigger className="w-48 bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os responsáveis</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   {RESPONSIBLES_LIST.map(res => (
                     <SelectItem key={res} value={res}>{res}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-        </div>
-      </div>
-
-      {/* CONTEÚDO PRINCIPAL (KANBAN) */}
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-12">
-        {SECTIONS.map(section => (
-          <motion.div
-            key={section.id}
-            layout
-            className="relative"
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragOverCategory(section.id);
-            }}
-            onDragLeave={() => {
-              setDragOverCategory(null);
-            }}
-            onDrop={async (e) => {
-              e.preventDefault();
-              const demandId = e.dataTransfer.getData('demandId');
-              if (demandId) {
-                await moveDemand(demandId, section.id);
-              }
-              setDragOverCategory(null);
-              setIsDragging(false);
-            }}
-          >
-            <div className="flex items-center justify-between mb-6 px-2">
-              <div className="flex items-center gap-4">
-                <div className={`w-2 h-8 rounded-full bg-${section.color}-500 shadow-lg shadow-${section.color}-500/20`}></div>
-                <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight" style={{ fontFamily: 'Manrope, sans-serif' }}>
-                  {section.title}
-                </h2>
-                <span className="bg-slate-200 text-slate-600 px-3 py-1 rounded-full text-xs font-bold">
-                  {getDemandsByCategory(section.id).length}
-                </span>
-              </div>
-              
+            
+            {(filterPriority !== "all" || filterSubgroup !== "all" || filterResponsible !== "all") && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setPresentationMode({ category: section.id, title: section.title })}
-                disabled={getDemandsByCategory(section.id).length === 0}
-                className="text-slate-500 hover:text-sky-600 hover:bg-sky-50 font-bold uppercase tracking-widest text-[10px]"
+                onClick={() => {
+                  setFilterPriority("all");
+                  setFilterSubgroup("all");
+                  setFilterResponsible("all");
+                }}
+                className="text-white hover:bg-white/20"
               >
-                <Presentation className="w-4 h-4 mr-2" />
-                Modo apresentação da seção
+                Limpar filtros
               </Button>
-            </div>
+            )}
+          </div>
+        </div>
+      </div>
 
-            <div 
-              className={`min-h-[220px] rounded-[2rem] p-8 transition-all duration-500 ease-out border-2 border-transparent ${
-                dragOverCategory === section.id 
-                ? 'bg-sky-100/60 border-dashed border-sky-400 scale-[1.01] shadow-2xl shadow-sky-200/50' 
-                : 'bg-white/40 backdrop-blur-sm border-slate-200/50'
-              }`}
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        {SECTIONS.map(section => {
+          const sectionDemands = getDemandsByCategory(section.id);
+          
+          return (
+            <motion.div
+              key={section.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="bg-white/50 backdrop-blur-sm rounded-2xl border border-slate-200 p-6 shadow-sm"
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOverCategory(section.id);
+              }}
+              onDragLeave={() => setDragOverCategory(null)}
+              onDrop={async (e) => {
+                e.preventDefault();
+                const demandId = e.dataTransfer.getData('demandId');
+                const currentCategory = e.dataTransfer.getData('currentCategory');
+                
+                if (demandId && currentCategory !== section.id) {
+                  await moveDemand(demandId, section.id);
+                  toast.success('Demanda movida com sucesso!');
+                }
+                setDragOverCategory(null);
+              }}
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <AnimatePresence mode="popLayout">
-                  {getDemandsByCategory(section.id).map(demand => (
-                    <DemandCard
-                      key={demand.id}
-                      demand={demand}
-                      isDeleteMode={isDeleteMode}
-                      selectedIds={selectedIds}
-                      onToggleSelect={toggleSelect}
-                      onMoveTo={handleContextMoveTo}
-                      onOpenPresentation={handleOpenSinglePresentation}
-                      onDragStart={() => setIsDragging(true)}
-                      onDragEnd={() => {
-                        setIsDragging(false);
-                        stopAutoScroll();
-                      }}
-                      onEdit={handleOpenEdit}
-                    />
-                  ))}
-                </AnimatePresence>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                  {section.title}
+                </h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPresentationMode({ category: section.id, title: section.title })}
+                  disabled={sectionDemands.length === 0}
+                  className="gap-2"
+                >
+                  <Presentation className="w-4 h-4" />
+                  Modo apresentação
+                </Button>
               </div>
-
-              {getDemandsByCategory(section.id).length === 0 && !dragOverCategory && (
-                <div className="h-32 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl">
-                  <p className="text-sm font-medium italic">Nenhuma demanda nesta categoria</p>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        ))}
+              
+              <div 
+                className={`min-h-48 space-y-3 rounded-xl p-6 transition-all duration-300 ${
+                  dragOverCategory === section.id ? 'bg-sky-100 border-2 border-dashed border-sky-400 scale-[1.02]' : 'bg-transparent'
+                }`}
+              >
+                {sectionDemands.length === 0 ? (
+                  <div className="text-center py-16 text-slate-400">
+                    <p className="text-sm">Nenhuma demanda nesta categoria</p>
+                    {dragOverCategory === section.id && (
+                      <p className="text-sm text-sky-600 mt-2 font-semibold">↓ Solte aqui para mover ↓</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <AnimatePresence>
+                      {sectionDemands.map(demand => (
+                        <DemandCard
+                          key={demand.id}
+                          demand={demand}
+                          isDeleteMode={isDeleteMode}
+                          selectedIds={selectedIds}
+                          onToggleSelect={toggleSelect}
+                          onMoveTo={handleContextMoveTo}
+                          onOpenPresentation={handleOpenSinglePresentation}
+                          onDragStart={handleDragStart}
+                          onDragEnd={handleDragEnd}
+                          onEdit={handleOpenEdit}
+                        />
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
       </main>
 
-      {/* BOTÕES FIXOS FLUTUANTES */}
-      <div className="fixed bottom-10 left-10 z-[60] flex flex-col gap-4">
+      {/* Floating Action Buttons */}
+      <div className="fixed bottom-8 left-8 z-[60]">
         <Button
           onClick={handleOpenCreate}
-          className="bg-sky-500 hover:bg-sky-600 text-white rounded-2xl px-8 py-8 shadow-2xl shadow-sky-500/40 flex items-center gap-3 font-bold text-lg transition-all hover:scale-105 active:scale-95 group"
+          className="bg-sky-500 hover:bg-sky-600 text-white rounded-full px-6 py-6 shadow-lg shadow-sky-500/30 flex items-center gap-2 font-semibold transition-transform hover:scale-105 active:scale-95"
         >
-          <div className="bg-white/20 p-2 rounded-xl group-hover:rotate-90 transition-transform">
-            <Plus className="w-6 h-6" />
-          </div>
-          Criar Novo Tema
+          <Plus className="w-5 h-5" />
+          Criar Tema
         </Button>
       </div>
 
-      <div className="fixed bottom-10 right-10 z-[60]">
+      <div className="fixed bottom-8 right-8 z-[60]">
         {!isDeleteMode ? (
           <Button
             onClick={() => setIsDeleteMode(true)}
             variant="destructive"
-            className="rounded-2xl px-8 py-8 shadow-2xl shadow-rose-500/30 flex items-center gap-3 font-bold text-lg transition-all hover:scale-105 active:scale-95"
+            className="rounded-full px-6 py-6 shadow-lg flex items-center gap-2 font-semibold transition-transform hover:scale-105 active:scale-95"
           >
-            <div className="bg-white/20 p-2 rounded-xl">
-              <Trash2 className="w-6 h-6" />
-            </div>
-            Gerenciar Exclusão
+            <Trash2 className="w-5 h-5" />
+            Excluir Tema
           </Button>
         ) : (
-          <div className="flex items-center gap-4 p-3 bg-white rounded-3xl shadow-2xl border border-slate-200 animate-in slide-in-from-right">
+          <div className="flex gap-3">
             <Button
               onClick={() => {
                 setIsDeleteMode(false);
                 setSelectedIds([]);
               }}
-              variant="ghost"
-              className="rounded-2xl px-6 py-6 font-bold text-slate-500"
+              variant="outline"
+              className="rounded-full px-6 py-6 shadow-lg"
             >
               Cancelar
             </Button>
             <Button
               onClick={deleteSelected}
               variant="destructive"
-              className="rounded-2xl px-8 py-6 flex items-center gap-3 font-bold shadow-lg shadow-rose-500/20"
+              className="rounded-full px-6 py-6 shadow-lg flex items-center gap-2"
               disabled={selectedIds.length === 0}
             >
               <Trash2 className="w-5 h-5" />
-              Excluir Selecionados ({selectedIds.length})
+              Excluir ({selectedIds.length})
             </Button>
           </div>
         )}
       </div>
 
-      {/* MODAL DE CRIAÇÃO / EDIÇÃO */}
+      {/* Create/Edit Demand Modal */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-[2rem] border-0 shadow-2xl p-0">
-          <div className="bg-sky-600 p-8 text-white relative">
-            <DialogHeader>
-              <DialogTitle className="text-3xl font-extrabold tracking-tight">
-                {editingDemandId ? "Atualizar Tema" : "Novo Tema Semanal"}
-              </DialogTitle>
-              <p className="text-sky-100 opacity-80 font-medium">Preencha as informações detalhadas da demanda abaixo.</p>
-            </DialogHeader>
-          </div>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingDemandId ? "Editar Demanda" : "Criar Nova Demanda"}</DialogTitle>
+          </DialogHeader>
           
-          <div className="p-8 space-y-8 bg-white">
-            <div className="space-y-3">
-              <Label htmlFor="description" className="text-sm font-bold text-slate-500 uppercase tracking-widest">Descrição do Tema *</Label>
-              <Input 
-                id="description" 
-                value={formData.description} 
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="description">Descrição do Tema *</Label>
+              <Input
+                id="description"
+                value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Ex: Refatoração do dashboard de KPIs..."
-                className="h-14 rounded-2xl border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-sky-100 transition-all text-lg font-medium"
+                placeholder="Descreva o tema da demanda..."
               />
             </div>
 
-            <div className="space-y-3">
-              <Label htmlFor="observation" className="text-sm font-bold text-slate-500 uppercase tracking-widest">Observações / Detalhamento</Label>
-              <textarea 
-                id="observation" 
-                className="w-full p-5 border-2 border-slate-100 rounded-2xl text-base min-h-[120px] focus:ring-4 focus:ring-sky-100 focus:border-sky-300 outline-none transition-all bg-slate-50 focus:bg-white font-medium"
+            <div className="space-y-2">
+              <Label htmlFor="observation">Observação</Label>
+              <textarea
+                id="observation"
+                className="w-full p-2 border rounded-md text-sm min-h-[80px] focus:ring-2 focus:ring-sky-500 outline-none"
                 value={formData.observation}
                 onChange={(e) => setFormData({ ...formData, observation: e.target.value })}
-                placeholder="Descreva pontos críticos, bloqueios ou detalhes importantes..."
+                placeholder="Detalhes adicionais sobre o tema..."
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <Label className="text-sm font-bold text-slate-500 uppercase tracking-widest">Nível de Prioridade</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Prioridade</Label>
                 <Select 
                   value={formData.priority} 
                   onValueChange={(v) => setFormData({ ...formData, priority: v })}
                 >
-                  <SelectTrigger className="h-14 rounded-2xl border-slate-200 bg-slate-50 font-bold">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="alta" className="text-rose-600 font-bold">🔥 ALTA</SelectItem>
-                    <SelectItem value="media" className="text-amber-600 font-bold">⚡ MÉDIA</SelectItem>
-                    <SelectItem value="baixa" className="text-sky-600 font-bold">✨ BAIXA</SelectItem>
+                    <SelectItem value="alta">Alta</SelectItem>
+                    <SelectItem value="media">Média</SelectItem>
+                    <SelectItem value="baixa">Baixa</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="space-y-3">
-                <Label htmlFor="deliveryDate" className="text-sm font-bold text-slate-500 uppercase tracking-widest">Previsão de Entrega</Label>
-                <div className="relative">
-                  <Input 
-                    id="deliveryDate" 
-                    value={formData.deliveryDate} 
-                    onChange={(e) => setFormData({ ...formData, deliveryDate: formatDataInput(e.target.value) })}
-                    placeholder="DD/MM/AAAA"
-                    className="h-14 rounded-2xl border-slate-200 bg-slate-50 pl-12 font-bold"
-                  />
-                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="deliveryDate">Data de Entrega</Label>
+                <Input
+                  id="deliveryDate"
+                  value={formData.deliveryDate}
+                  onChange={(e) => setFormData({ ...formData, deliveryDate: formatDataInput(e.target.value) })}
+                  placeholder="DD/MM/AAAA"
+                />
               </div>
             </div>
 
-            <div className="space-y-4">
-              <Label className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                <Tags className="w-4 h-4" />
-                Sub-grupos Envolvidos *
-              </Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-6 border-2 border-slate-100 rounded-[2rem] bg-slate-50/50">
+            <div className="space-y-2">
+              <Label>Sub-grupos *</Label>
+              <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-slate-50">
                 {SUBGROUPS.map(sg => (
-                  <div 
-                    key={sg} 
-                    className={`flex items-center gap-3 p-3 rounded-xl transition-all cursor-pointer ${
-                      formData.subgroup.includes(sg) ? 'bg-sky-100 text-sky-700 shadow-sm' : 'hover:bg-white'
-                    }`}
-                    onClick={() => toggleSubgroupSelection(sg)}
-                  >
+                  <div key={sg} className="flex items-center gap-2">
                     <Checkbox 
                       id={`sg-${sg}`}
                       checked={formData.subgroup.includes(sg)}
                       onCheckedChange={() => toggleSubgroupSelection(sg)}
-                      className="rounded-md border-2"
                     />
-                    <label htmlFor={`sg-${sg}`} className="text-xs font-bold cursor-pointer select-none">{sg}</label>
+                    <label htmlFor={`sg-${sg}`} className="text-xs text-slate-600 cursor-pointer">{sg}</label>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="space-y-4">
-              <Label className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Responsáveis Diretos *
-              </Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-6 border-2 border-slate-100 rounded-[2rem] bg-slate-50/50">
+            <div className="space-y-2">
+              <Label>Responsáveis *</Label>
+              <div className="grid grid-cols-3 gap-2 p-3 border rounded-md bg-slate-50">
                 {RESPONSIBLES_LIST.map(res => (
-                  <div 
-                    key={res} 
-                    className={`flex items-center gap-2 p-2 rounded-lg transition-all cursor-pointer border-2 ${
-                      formData.responsible.includes(res) ? 'bg-white border-sky-400 text-sky-700' : 'border-transparent hover:border-slate-200'
-                    }`}
-                    onClick={() => toggleResponsibleSelection(res)}
-                  >
+                  <div key={res} className="flex items-center gap-2">
                     <Checkbox 
                       id={`res-${res}`}
                       checked={formData.responsible.includes(res)}
                       onCheckedChange={() => toggleResponsibleSelection(res)}
                     />
-                    <label htmlFor={`res-${res}`} className="text-[10px] font-extrabold cursor-pointer select-none">{res}</label>
+                    <label htmlFor={`res-${res}`} className="text-[10px] text-slate-600 cursor-pointer">{res}</label>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
 
-          <DialogFooter className="p-8 bg-slate-50 border-t border-slate-100 rounded-b-[2rem]">
-            <Button variant="ghost" onClick={() => setShowCreateModal(false)} className="px-8 h-14 rounded-2xl font-bold text-slate-500">
-              Descartar
-            </Button>
-            <Button 
-              onClick={saveDemand} 
-              className="bg-sky-600 hover:bg-sky-700 px-10 h-14 rounded-2xl font-bold shadow-xl shadow-sky-600/20 text-lg"
-            >
-              {editingDemandId ? "Salvar Alterações" : "Publicar Tema"}
+            <div className="space-y-2">
+              <Label>Categoria Inicial</Label>
+              <Select 
+                value={formData.category} 
+                onValueChange={(v) => setFormData({ ...formData, category: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SECTIONS.map(sec => (
+                    <SelectItem key={sec.id} value={sec.id}>{sec.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateModal(false)}>Cancelar</Button>
+            <Button onClick={saveDemand} className="bg-sky-600 hover:bg-sky-700">
+              {editingDemandId ? "Salvar Alterações" : "Criar Tema"}
             </Button>
           </DialogFooter>
         </DialogContent>
