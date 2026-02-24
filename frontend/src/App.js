@@ -599,58 +599,58 @@ const fetchDemands = useCallback(async () => {
   const scrollIntervalRef = useRef(null);
 
   // ===== AUTO SCROLL =====
-const SCROLL_ZONE_HEIGHT = 250; // altura da zona sensível (px)
-const MAX_SCROLL_SPEED = 90; // velocidade máxima
+const MAX_SCROLL_SPEED = 160; // velocidade máxima
 
 const startAutoScroll = (getSpeed) => {
   if (scrollIntervalRef.current) return;
 
-  scrollIntervalRef.current = setInterval(() => {
+  const scroll = () => {
     const speed = getSpeed();
     if (speed !== 0) {
-      window.scrollBy({ top: speed, behavior: "auto" });
+      window.scrollBy(0, speed);
+      scrollIntervalRef.current = requestAnimationFrame(scroll);
+    } else {
+      stopAutoScroll();
     }
-  }, 16);
+  };
+
+  scrollIntervalRef.current = requestAnimationFrame(scroll);
 };
 
 const stopAutoScroll = () => {
   if (scrollIntervalRef.current) {
-    clearInterval(scrollIntervalRef.current);
+    cancelAnimationFrame(scrollIntervalRef.current);
     scrollIntervalRef.current = null;
   }
 };
   
-  
 
-  const handleGlobalDragOver = useCallback((e) => {
+ const handleGlobalDragOver = useCallback((e) => {
   if (!isDragging) return;
 
   const mouseY = e.clientY;
-  const windowHeight = window.innerHeight;
+  const viewportHeight = window.innerHeight;
+
+  const topZone = viewportHeight * 0.40;     // 40% superior
+  const bottomZone = viewportHeight * 0.60;  // 40% inferior
 
   let scrollSpeed = 0;
 
-const viewportHeight = window.innerHeight;
+  if (mouseY < topZone) {
+    const intensity = Math.pow((topZone - mouseY) / topZone, 2);
+    scrollSpeed = -MAX_SCROLL_SPEED * intensity;
+  } 
+  else if (mouseY > bottomZone) {
+    const intensity = Math.pow((mouseY - bottomZone) / (viewportHeight - bottomZone), 2);
+    scrollSpeed = MAX_SCROLL_SPEED * intensity;
+  }
 
-const topZone = viewportHeight * 0.40;     // 40% superior
-const bottomZone = viewportHeight * 0.60;  // 60% inferior
-
-let scrollSpeed = 0;
-
-if (mouseY < topZone) {
-  const intensity = (topZone - mouseY) / topZone;
-  scrollSpeed = -MAX_SCROLL_SPEED * intensity;
-} 
-else if (mouseY > bottomZone) {
-  const intensity = (mouseY - bottomZone) / (viewportHeight - bottomZone);
-  scrollSpeed = MAX_SCROLL_SPEED * intensity;
-}
-    
   if (scrollSpeed !== 0) {
     startAutoScroll(() => scrollSpeed);
   } else {
     stopAutoScroll();
   }
+
 }, [isDragging]);
 
   const handleDragStart = () => setIsDragging(true);
