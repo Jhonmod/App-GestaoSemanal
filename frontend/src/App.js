@@ -61,14 +61,11 @@ const getWeekInfo = () => {
   const lastDayOfYear = new Date(today.getFullYear(), 11, 31);
   const totalWeeks = lastDayOfYear.getDay() === 4 || lastDayOfYear.getDay() === 3 ? 53 : 52;
 
-  return {
-    week: weekNumber,
-    total: totalWeeks
-  };
+  return { week: weekNumber, total: totalWeeks };
 };
 
 /* ===========================
-   DEMAND CARD
+   DEMAND CARD - AJUSTADO
 =========================== */
 function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveTo, onOpenPresentation, onDragStart, onDragEnd, onEdit }) {
   const priorityStyle = PRIORITY_COLORS[demand.priority];
@@ -106,7 +103,8 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
   return (
     <ContextMenu modal={false}>
       <ContextMenuTrigger asChild>
-        <div>
+        {/* select-none impede o cursor de seleção de texto */}
+        <div className="select-none">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -115,7 +113,8 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
             draggable={!isDeleteMode}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
-            className={`bg-white p-6 rounded-xl border ${priorityStyle.border} shadow-sm hover:shadow-md transition-shadow duration-300 group relative overflow-hidden ${!isDeleteMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
+            // cursor-grab e select-none aplicados para melhorar a UX do arrasto
+            className={`bg-white p-6 rounded-xl border ${priorityStyle.border} shadow-sm hover:shadow-md transition-shadow duration-300 group relative overflow-hidden select-none ${!isDeleteMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
           >
             <div className={`absolute left-0 top-0 bottom-0 w-1 ${priorityStyle.badge}`}></div>
 
@@ -128,7 +127,8 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
               </div>
             )}
 
-            <div className="flex items-start gap-3">
+            {/* pointer-events-none faz com que o clique ignore o texto e foque no card pai */}
+            <div className="flex items-start gap-3 pointer-events-none">
               <div className="text-slate-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <GripVertical className="w-4 h-4" />
               </div>
@@ -143,7 +143,7 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
                     </span>
                   ))}
                 </div>
-                <p className="text-sm text-slate-700 leading-relaxed mb-3">{demand.description}</p>
+                <p className="text-sm text-slate-700 leading-relaxed mb-3 font-medium">{demand.description}</p>
                 <div className="flex items-center gap-2 text-xs text-slate-500">
                   <span className="font-medium">Responsáveis:</span>
                   <span>{responsibles.join(", ")}</span>
@@ -383,13 +383,7 @@ function App() {
   const { week, total } = useMemo(() => getWeekInfo(), []);
 
   const [formData, setFormData] = useState({
-    description: "",
-    priority: "media",
-    responsible: [],
-    subgroup: [],
-    observation: "",
-    deliveryDate: "",
-    category: "this_week"
+    description: "", priority: "media", responsible: [], subgroup: [], observation: "", deliveryDate: "", category: "this_week"
   });
 
   // AUTO-SCROLL LOGIC
@@ -398,9 +392,8 @@ function App() {
 
   const startAutoScroll = useCallback((direction) => {
     if (scrollRafRef.current) return;
-
     const scroll = () => {
-      const scrollSpeed = 12; // Velocidade do scroll
+      const scrollSpeed = 12;
       window.scrollBy(0, direction === 'up' ? -scrollSpeed : scrollSpeed);
       scrollRafRef.current = requestAnimationFrame(scroll);
     };
@@ -417,24 +410,14 @@ function App() {
   useEffect(() => {
     const handleDragOver = (e) => {
       if (!isDragging) return;
-      
-      const threshold = 120; // Distância da borda para ativar
+      const threshold = 120;
       const { clientY } = e;
       const { innerHeight } = window;
-
-      if (clientY < threshold) {
-        startAutoScroll('up');
-      } else if (clientY > innerHeight - threshold) {
-        startAutoScroll('down');
-      } else {
-        stopAutoScroll();
-      }
+      if (clientY < threshold) startAutoScroll('up');
+      else if (clientY > innerHeight - threshold) startAutoScroll('down');
+      else stopAutoScroll();
     };
-
-    if (isDragging) {
-      window.addEventListener('dragover', handleDragOver);
-    }
-    
+    if (isDragging) window.addEventListener('dragover', handleDragOver);
     return () => {
       window.removeEventListener('dragover', handleDragOver);
       stopAutoScroll();
@@ -456,9 +439,7 @@ function App() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchDemands();
-  }, [fetchDemands]);
+  useEffect(() => { fetchDemands(); }, [fetchDemands]);
 
   const applyFilters = useCallback(() => {
     let filtered = [...demands];
@@ -478,28 +459,21 @@ function App() {
     setFilteredDemands(filtered);
   }, [demands, filterPriority, filterSubgroup, filterResponsible]);
 
-  useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
+  useEffect(() => { applyFilters(); }, [applyFilters]);
 
   const handleOpenCreate = () => {
     setEditingDemandId(null);
-    setFormData({
-      description: "", priority: "media", responsible: [], subgroup: [], observation: "", deliveryDate: "", category: "this_week"
-    });
+    setFormData({ description: "", priority: "media", responsible: [], subgroup: [], observation: "", deliveryDate: "", category: "this_week" });
     setShowCreateModal(true);
   };
 
   const handleOpenEdit = (demand) => {
     setEditingDemandId(demand.id);
     setFormData({
-      description: demand.description,
-      priority: demand.priority,
+      description: demand.description, priority: demand.priority,
       responsible: Array.isArray(demand.responsible) ? demand.responsible : [demand.responsible],
       subgroup: Array.isArray(demand.subgroup) ? demand.subgroup : [demand.subgroup],
-      observation: demand.observation || "",
-      deliveryDate: demand.deliveryDate || "",
-      category: demand.category
+      observation: demand.observation || "", deliveryDate: demand.deliveryDate || "", category: demand.category
     });
     setShowCreateModal(true);
   };
@@ -517,18 +491,12 @@ function App() {
       return;
     }
     try {
-      if (editingDemandId) {
-        await axios.put(`${API}/demands/${editingDemandId}`, formData);
-        toast.success("Demanda atualizada!");
-      } else {
-        await axios.post(`${API}/demands`, formData);
-        toast.success("Demanda criada!");
-      }
+      if (editingDemandId) await axios.put(`${API}/demands/${editingDemandId}`, formData);
+      else await axios.post(`${API}/demands`, formData);
+      toast.success("Sucesso!");
       setShowCreateModal(false);
       fetchDemands();
-    } catch (error) {
-      toast.error("Erro ao salvar demanda");
-    }
+    } catch (error) { toast.error("Erro ao salvar"); }
   };
 
   const updateObservationInline = async (demandId, newObs) => {
@@ -536,20 +504,14 @@ function App() {
       await axios.put(`${API}/demands/${demandId}`, { observation: newObs });
       setDemands(prev => prev.map(d => d.id === demandId ? { ...d, observation: newObs } : d));
       toast.success("Observação atualizada!");
-    } catch (error) {
-      toast.error("Erro ao atualizar observação");
-    }
+    } catch (error) { toast.error("Erro ao atualizar"); }
   };
 
   const moveDemand = async (demandId, newCategory) => {
-    const originalDemands = [...demands];
+    const original = [...demands];
     setDemands(prev => prev.map(d => d.id === demandId ? { ...d, category: newCategory } : d));
-    try {
-      await axios.put(`${API}/demands/${demandId}`, { category: newCategory });
-    } catch (error) {
-      setDemands(originalDemands);
-      toast.error("Erro ao salvar alteração");
-    }
+    try { await axios.put(`${API}/demands/${demandId}`, { category: newCategory }); }
+    catch (error) { setDemands(original); toast.error("Erro ao mover"); }
   };
 
   const handleContextMoveTo = async (demandId, newCategory) => {
@@ -569,25 +531,12 @@ function App() {
       setSelectedIds([]);
       setIsDeleteMode(false);
       fetchDemands();
-    } catch (error) {
-      toast.error("Erro ao excluir");
-    }
+    } catch (error) { toast.error("Erro ao excluir"); }
   };
 
   const toggleSelect = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-
-  const toggleSubgroupSelection = (sg) => {
-    setFormData(prev => ({
-      ...prev, subgroup: prev.subgroup.includes(sg) ? prev.subgroup.filter(i => i !== sg) : [...prev.subgroup, sg]
-    }));
-  };
-
-  const toggleResponsibleSelection = (resp) => {
-    setFormData(prev => ({
-      ...prev, responsible: prev.responsible.includes(resp) ? prev.responsible.filter(i => i !== resp) : [...prev.responsible, resp]
-    }));
-  };
-
+  const toggleSubgroupSelection = (sg) => setFormData(prev => ({ ...prev, subgroup: prev.subgroup.includes(sg) ? prev.subgroup.filter(i => i !== sg) : [...prev.subgroup, sg] }));
+  const toggleResponsibleSelection = (resp) => setFormData(prev => ({ ...prev, responsible: prev.responsible.includes(resp) ? prev.responsible.filter(i => i !== resp) : [...prev.responsible, resp] }));
   const getDemandsByCategory = (category) => filteredDemands.filter(d => d.category === category);
 
   const [dragOverCategory, setDragOverCategory] = useState(null);
@@ -596,11 +545,10 @@ function App() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-50/50" style={{ fontFamily: 'Inter, sans-serif' }}>
       <Toaster position="top-right" />
       
-      {/* Header */}
       <header className="bg-[#004C97] border-b border-[#003D7A] sticky top-0 z-40 shadow-lg">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img src="https://customer-assets.emergentagent.com/job_kanban-vendas/artifacts/dagja3ws_ChatGPT%20Image%207%20de%20fev.%20de%202026%2C%2016_51_34.png" alt="Martins Logo" className="h-12 w-auto brightness-0 invert" />
+            <img src="https://customer-assets.emergentagent.com/job_kanban-vendas/artifacts/dagja3ws_ChatGPT%20Image%207%20de%20fev.%20de%202026%2C%2016_51_34.png" alt="Logo" className="h-12 w-auto brightness-0 invert" />
             <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Manrope, sans-serif' }}>Gestão de Demandas Semanal</h1>
           </div>
           <div className="flex items-center gap-3 text-white">
@@ -611,7 +559,6 @@ function App() {
         </div>
       </header>
 
-      {/* Presentation Mode Modal */}
       <AnimatePresence>
         {presentationMode && (
           <PresentationMode
@@ -624,10 +571,8 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* Filters */}
       <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="bg-[#004C97] rounded-xl border border-[#003D7A] p-4 shadow-lg">
-          <div className="flex flex-wrap items-center gap-6">
+        <div className="bg-[#004C97] rounded-xl border border-[#003D7A] p-4 shadow-lg flex flex-wrap gap-6 items-center">
             <div className="flex items-center gap-2 text-white"><Filter className="w-4 h-4" /><span className="font-medium text-sm">Filtros:</span></div>
             <div className="flex items-center gap-2">
               <Label className="text-sm text-white font-medium">Prioridade:</Label>
@@ -661,75 +606,50 @@ function App() {
                 </SelectContent>
               </Select>
             </div>
-            {(filterPriority !== "all" || filterSubgroup !== "all" || filterResponsible !== "all") && (
-              <Button variant="ghost" size="sm" onClick={() => { setFilterPriority("all"); setFilterSubgroup("all"); setFilterResponsible("all"); }} className="text-white hover:bg-white/20">Limpar filtros</Button>
-            )}
-          </div>
         </div>
       </div>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-        {SECTIONS.map(section => {
-          const sectionDemands = getDemandsByCategory(section.id);
-          return (
-            <motion.div
-              key={section.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="bg-white/50 backdrop-blur-sm rounded-2xl border border-slate-200 p-6 shadow-sm"
-              onDragOver={(e) => { e.preventDefault(); setDragOverCategory(section.id); }}
-              onDragLeave={() => setDragOverCategory(null)}
-              onDrop={async (e) => {
-                e.preventDefault();
-                const demandId = e.dataTransfer.getData('demandId');
-                const currentCategory = e.dataTransfer.getData('currentCategory');
-                if (demandId && currentCategory !== section.id) {
-                  await moveDemand(demandId, section.id);
-                  toast.success('Demanda movida!');
-                }
-                setDragOverCategory(null);
-                setIsDragging(false);
-              }}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>{section.title}</h2>
-                <Button variant="outline" size="sm" onClick={() => setPresentationMode({ category: section.id, title: section.title })} disabled={sectionDemands.length === 0} className="gap-2"><Presentation className="w-4 h-4" />Modo apresentação</Button>
-              </div>
-              <div className={`min-h-48 space-y-3 rounded-xl p-6 transition-all duration-300 ${dragOverCategory === section.id ? 'bg-sky-100 border-2 border-dashed border-sky-400 scale-[1.02]' : 'bg-transparent'}`}>
-                {sectionDemands.length === 0 ? (
-                  <div className="text-center py-16 text-slate-400">
-                    <p className="text-sm">Nenhuma demanda nesta categoria</p>
-                    {dragOverCategory === section.id && <p className="text-sm text-sky-600 mt-2 font-semibold">↓ Solte aqui ↓</p>}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <AnimatePresence>
-                      {sectionDemands.map(demand => (
-                        <DemandCard
-                          key={demand.id}
-                          demand={demand}
-                          isDeleteMode={isDeleteMode}
-                          selectedIds={selectedIds}
-                          onToggleSelect={toggleSelect}
-                          onMoveTo={handleContextMoveTo}
-                          onOpenPresentation={handleOpenSinglePresentation}
-                          onDragStart={() => setIsDragging(true)}
-                          onDragEnd={() => { setIsDragging(false); stopAutoScroll(); }}
-                          onEdit={handleOpenEdit}
-                        />
-                      ))}
-                    </AnimatePresence>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          );
-        })}
+        {SECTIONS.map(section => (
+          <motion.div
+            key={section.id}
+            className="bg-white/50 backdrop-blur-sm rounded-2xl border border-slate-200 p-6 shadow-sm"
+            onDragOver={(e) => { e.preventDefault(); setDragOverCategory(section.id); }}
+            onDragLeave={() => setDragOverCategory(null)}
+            onDrop={async (e) => {
+              e.preventDefault();
+              const dId = e.dataTransfer.getData('demandId');
+              if (dId) await moveDemand(dId, section.id);
+              setDragOverCategory(null);
+              setIsDragging(false);
+            }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-slate-900" style={{ fontFamily: 'Manrope, sans-serif' }}>{section.title}</h2>
+              <Button variant="outline" size="sm" onClick={() => setPresentationMode({ category: section.id, title: section.title })} disabled={getDemandsByCategory(section.id).length === 0}><Presentation className="w-4 h-4 mr-2" />Modo apresentação</Button>
+            </div>
+            <div className={`min-h-48 space-y-3 rounded-xl p-6 transition-all duration-300 ${dragOverCategory === section.id ? 'bg-sky-100 border-2 border-dashed border-sky-400 scale-[1.02]' : 'bg-transparent'}`}>
+              <AnimatePresence>
+                {getDemandsByCategory(section.id).map(demand => (
+                  <DemandCard
+                    key={demand.id}
+                    demand={demand}
+                    isDeleteMode={isDeleteMode}
+                    selectedIds={selectedIds}
+                    onToggleSelect={toggleSelect}
+                    onMoveTo={handleContextMoveTo}
+                    onOpenPresentation={handleOpenSinglePresentation}
+                    onDragStart={() => setIsDragging(true)}
+                    onDragEnd={() => { setIsDragging(false); stopAutoScroll(); }}
+                    onEdit={handleOpenEdit}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        ))}
       </main>
 
-      {/* Floating Action Buttons */}
       <div className="fixed bottom-8 left-8 z-[60]">
         <Button onClick={handleOpenCreate} className="bg-sky-500 hover:bg-sky-600 text-white rounded-full px-6 py-6 shadow-lg shadow-sky-500/30 flex items-center gap-2 font-semibold transition-transform hover:scale-105 active:scale-95"><Plus className="w-5 h-5" />Criar Tema</Button>
       </div>
@@ -745,7 +665,6 @@ function App() {
         )}
       </div>
 
-      {/* Create/Edit Modal */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingDemandId ? "Editar Demanda" : "Criar Nova Demanda"}</DialogTitle></DialogHeader>
