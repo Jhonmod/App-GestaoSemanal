@@ -615,14 +615,17 @@ const startAutoScroll = useCallback((getSpeed) => {
   };
 
   scrollIntervalRef.current = requestAnimationFrame(scroll);
+}, [stopAutoScroll]);
+
+  scrollIntervalRef.current = requestAnimationFrame(scroll);
 }, []);
 
-const stopAutoScroll = () => {
+const stopAutoScroll = useCallback(() => {
   if (scrollIntervalRef.current) {
     cancelAnimationFrame(scrollIntervalRef.current);
     scrollIntervalRef.current = null;
   }
-};
+}, []);
   
 
  const handleGlobalDragOver = useCallback((e) => {
