@@ -630,19 +630,22 @@ const stopAutoScroll = () => {
 
   let scrollSpeed = 0;
 
-  // Zona superior
-  if (mouseY < SCROLL_ZONE_HEIGHT) {
-    const intensity = (SCROLL_ZONE_HEIGHT - mouseY) / SCROLL_ZONE_HEIGHT;
-    scrollSpeed = -MAX_SCROLL_SPEED * intensity;
-  }
+const viewportHeight = window.innerHeight;
 
-  // Zona inferior
-  else if (mouseY > windowHeight - SCROLL_ZONE_HEIGHT) {
-    const intensity =
-      (mouseY - (windowHeight - SCROLL_ZONE_HEIGHT)) / SCROLL_ZONE_HEIGHT;
-    scrollSpeed = MAX_SCROLL_SPEED * intensity;
-  }
+const topZone = viewportHeight * 0.40;     // 40% superior
+const bottomZone = viewportHeight * 0.60;  // 60% inferior
 
+let scrollSpeed = 0;
+
+if (mouseY < topZone) {
+  const intensity = (topZone - mouseY) / topZone;
+  scrollSpeed = -MAX_SCROLL_SPEED * intensity;
+} 
+else if (mouseY > bottomZone) {
+  const intensity = (mouseY - bottomZone) / (viewportHeight - bottomZone);
+  scrollSpeed = MAX_SCROLL_SPEED * intensity;
+}
+    
   if (scrollSpeed !== 0) {
     startAutoScroll(() => scrollSpeed);
   } else {
