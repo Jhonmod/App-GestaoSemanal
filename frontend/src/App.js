@@ -601,6 +601,14 @@ const fetchDemands = useCallback(async () => {
   // ===== AUTO SCROLL =====
 const MAX_SCROLL_SPEED = 160; // velocidade máxima
 
+  const stopAutoScroll = useCallback(() => {
+  if (scrollIntervalRef.current) {
+    cancelAnimationFrame(scrollIntervalRef.current);
+    scrollIntervalRef.current = null;
+  }
+}, []);
+  
+
 const startAutoScroll = useCallback((getSpeed) => {
   if (scrollIntervalRef.current) return;
 
@@ -617,16 +625,6 @@ const startAutoScroll = useCallback((getSpeed) => {
   scrollIntervalRef.current = requestAnimationFrame(scroll);
 }, [stopAutoScroll]);
 
-  scrollIntervalRef.current = requestAnimationFrame(scroll);
-}, []);
-
-const stopAutoScroll = useCallback(() => {
-  if (scrollIntervalRef.current) {
-    cancelAnimationFrame(scrollIntervalRef.current);
-    scrollIntervalRef.current = null;
-  }
-}, []);
-  
 
  const handleGlobalDragOver = useCallback((e) => {
   if (!isDragging) return;
