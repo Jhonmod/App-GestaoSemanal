@@ -599,8 +599,8 @@ const fetchDemands = useCallback(async () => {
   const scrollIntervalRef = useRef(null);
 
   // ===== AUTO SCROLL =====
-const SCROLL_ZONE_HEIGHT = 120; // altura da zona sensível (px)
-const MAX_SCROLL_SPEED = 25; // velocidade máxima
+const SCROLL_ZONE_HEIGHT = 150; // altura da zona sensível (px)
+const MAX_SCROLL_SPEED = 45; // velocidade máxima
 
 const startAutoScroll = (getSpeed) => {
   if (scrollIntervalRef.current) return;
