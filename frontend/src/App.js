@@ -598,82 +598,29 @@ const fetchDemands = useCallback(async () => {
   const [isDragging, setIsDragging] = useState(false);
   const scrollIntervalRef = useRef(null);
 
-  // ===== AUTO SCROLL =====
-const MAX_SCROLL_SPEED = 160; // velocidade máxima
-
-  const stopAutoScroll = useCallback(() => {
-  if (scrollIntervalRef.current) {
-    cancelAnimationFrame(scrollIntervalRef.current);
-    scrollIntervalRef.current = null;
-  }
-}, []);
+  const handleScrollZoneEnter = (direction) => {
+    if (scrollIntervalRef.current) {
+      clearInterval(scrollIntervalRef.current);
+    }
+    
+    const scrollSpeed = direction === 'up' ? -15 : 15;
+    scrollIntervalRef.current = setInterval(() => {
+      window.scrollBy({ top: scrollSpeed, behavior: 'auto' });
+    }, 16);
+  };
   
-
-const startAutoScroll = useCallback((getSpeed) => {
-  if (scrollIntervalRef.current) return;
-
-  const scroll = () => {
-    const speed = getSpeed();
-    if (speed !== 0) {
-      window.scrollBy(0, speed);
-      scrollIntervalRef.current = requestAnimationFrame(scroll);
-    } else {
-      stopAutoScroll();
+  const handleScrollZoneLeave = () => {
+    if (scrollIntervalRef.current) {
+      clearInterval(scrollIntervalRef.current);
+      scrollIntervalRef.current = null;
     }
   };
-
-  scrollIntervalRef.current = requestAnimationFrame(scroll);
-}, [stopAutoScroll]);
-
-
- const handleGlobalDragOver = useCallback((e) => {
-  if (!isDragging) return;
-
-  const mouseY = e.clientY;
-  const viewportHeight = window.innerHeight;
-
-  const topZone = viewportHeight * 0.40;     // 40% superior
-  const bottomZone = viewportHeight * 0.60;  // 40% inferior
-
-  let scrollSpeed = 0;
-
-  if (mouseY < topZone) {
-    const intensity = Math.pow((topZone - mouseY) / topZone, 2);
-    scrollSpeed = -MAX_SCROLL_SPEED * intensity;
-  } 
-  else if (mouseY > bottomZone) {
-    const intensity = Math.pow((mouseY - bottomZone) / (viewportHeight - bottomZone), 2);
-    scrollSpeed = MAX_SCROLL_SPEED * intensity;
-  }
-
-  if (scrollSpeed !== 0) {
-    startAutoScroll(() => scrollSpeed);
-  } else {
-    stopAutoScroll();
-  }
-
-}, [isDragging, startAutoScroll, stopAutoScroll]);
 
   const handleDragStart = () => setIsDragging(true);
   const handleDragEnd = () => {
     setIsDragging(false);
-     stopAutoScroll();
+    handleScrollZoneLeave();
   };
-
-    // ===== LISTENER GLOBAL PARA AUTO SCROLL =====
-useEffect(() => {
-  if (isDragging) {
-    window.addEventListener("dragover", handleGlobalDragOver);
-  } else {
-    window.removeEventListener("dragover", handleGlobalDragOver);
-    stopAutoScroll();
-  }
-
-  return () => {
-    window.removeEventListener("dragover", handleGlobalDragOver);
-    stopAutoScroll();
-  };
-}, [isDragging, handleGlobalDragOver, stopAutoScroll]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-50/50" style={{ fontFamily: 'Inter, sans-serif' }}>
