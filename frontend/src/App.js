@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import "@/App.css";
 import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
-import { Plus, Trash2, X, ChevronLeft, ChevronRight, Presentation, Filter, GripVertical, ArrowRight, Edit2, Check, Calendar, Users, Tags } from "lucide-react";
+import { Plus, Trash2, X, ChevronLeft, ChevronRight, Presentation, Filter, GripVertical, ArrowRight, Edit2, Check, Calendar, Users, Tags, MoreVertical } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -111,6 +111,8 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
       <ContextMenuTrigger asChild>
         <div>
           <motion.div
+            layout
+            layoutId={`demand-${demand.id}`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9 }}
@@ -599,7 +601,8 @@ const fetchDemands = useCallback(async () => {
   const scrollIntervalRef = useRef(null);
 
   // ===== AUTO SCROLL =====
-const MAX_SCROLL_SPEED = 160; // velocidade máxima
+const MAX_SCROLL_SPEED = 22;
+  const SCROLL_ZONE = 180; // velocidade máxima
 
   const stopAutoScroll = useCallback(() => {
   if (scrollIntervalRef.current) {
@@ -632,8 +635,8 @@ const startAutoScroll = useCallback((getSpeed) => {
   const mouseY = e.clientY;
   const viewportHeight = window.innerHeight;
 
-  const topZone = viewportHeight * 0.40;     // 40% superior
-  const bottomZone = viewportHeight * 0.60;  // 40% inferior
+  const topZone = SCROLL_ZONE;     // 40% superior
+  const bottomZone = viewportHeight - SCROLL_ZONE;  // 40% inferior
 
   let scrollSpeed = 0;
 
@@ -713,7 +716,7 @@ useEffect(() => {
 
 
       {/* Presentation Mode Modal */}
-      <AnimatePresence>
+      <AnimatePresence mode="popLayout" initial={false}>
         {presentationMode && (
           <PresentationMode
             demands={getDemandsByCategory(presentationMode.category)}
@@ -856,7 +859,7 @@ useEffect(() => {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <AnimatePresence>
+                    <AnimatePresence mode="popLayout" initial={false}>
                       {sectionDemands.map(demand => (
                         <DemandCard
                           key={demand.id}
