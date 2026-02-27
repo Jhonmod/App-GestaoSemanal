@@ -231,7 +231,8 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] bg-slate-900/98 backdrop-blur-2xl flex items-center justify-center p-4 md:p-8"
     >
-      <motion.div
+      <AnimatePresence mode="wait">
+<motion.div
         key={currentDemand.id} // Chave baseada no ID para disparar animação de troca
         initial={{ opacity: 0, x: 10, scale: 0.99 }}
         animate={{ opacity: 1, x: 0, scale: 1 }}
@@ -371,6 +372,7 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
           </div>
         </div>
       </motion.div>
+      </AnimatePresence>
     </motion.div>
   );
 }
