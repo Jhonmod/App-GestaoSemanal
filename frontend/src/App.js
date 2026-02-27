@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import "@/App.css";
 import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
-import { Plus, Trash2, X, ChevronLeft, ChevronRight, Presentation, Filter, GripVertical, ArrowRight, Edit2, Check, Calendar, Users, Tags, MoreVertical } from "lucide-react";
+import { Plus, Trash2, X, ChevronLeft, ChevronRight, Presentation, Filter, GripVertical, ArrowRight, Edit2, Check, Calendar, Users, Tags } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,12 +77,15 @@ const getWeekInfo = () => {
 =========================== */
 function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveTo, onOpenPresentation, onDragStart, onDragEnd, onEdit }) {
   const priorityStyle = PRIORITY_COLORS[demand.priority];
-  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleDragStart = (e) => {
+    // CORREÇÃO: Impede a propagação para evitar carregar múltiplos elementos/cards
+    e.stopPropagation(); 
+    
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('demandId', demand.id);
     e.dataTransfer.setData('currentCategory', demand.category);
+    
     const dragImage = e.currentTarget.cloneNode(true);
     dragImage.style.position = 'absolute';
     dragImage.style.top = '-1000px';
@@ -95,6 +98,7 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
     setTimeout(() => {
       if (document.body.contains(dragImage)) document.body.removeChild(dragImage);
     }, 0);
+    
     e.currentTarget.classList.add('dragging');
     if (onDragStart) onDragStart();
   };
@@ -108,14 +112,14 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
   const responsibles = Array.isArray(demand.responsible) ? demand.responsible : [demand.responsible];
 
   return (
-    <ContextMenu modal={false} onOpenChange={setMenuOpen}>
+    <ContextMenu modal={false}>
       <ContextMenuTrigger asChild>
         <motion.div
           layout
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
-          transition={{ duration: 0.2 }}
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
           draggable={!isDeleteMode}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
@@ -137,19 +141,6 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
               <div className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
                 <GripVertical className="w-4 h-4" />
               </div>
-              {/* Botão de 3 Pontinhos para abrir o menu */}
-              <button 
-                type="button"
-                className="p-1 hover:bg-slate-100 rounded text-slate-500"
-                onClick={(e) => {
-                  e.preventDefault();
-                  // Simula o clique direito para abrir o ContextMenu programaticamente não é trivial no Radix sem refs expostas, 
-                  // então mantemos o ContextMenuTrigger e orientamos o usuário que o clique nos 3 pontos agora é o atalho visual.
-                  // Para o Radix ContextMenu, o gatilho padrão é o Right Click, mas adicionamos o ícone como solicitado.
-                }}
-              >
-                <MoreVertical className="w-4 h-4" />
-              </button>
             </div>
             
             <div className="flex-1">
@@ -204,7 +195,7 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
 }
 
 /* ===========================
-   PRESENTATION MODE (INALTERADO)
+   PRESENTATION MODE (CORRIGIDO - SUAVE)
 =========================== */
 function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpdateObservation }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -241,11 +232,11 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
       className="fixed inset-0 z-[100] bg-slate-900/98 backdrop-blur-2xl flex items-center justify-center p-4 md:p-8"
     >
       <motion.div
-        key={currentIndex}
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
+        key={currentDemand.id} // Chave baseada no ID para disparar animação de troca
+        initial={{ opacity: 0, x: 10, scale: 0.99 }}
+        animate={{ opacity: 1, x: 0, scale: 1 }}
+        exit={{ opacity: 0, x: -10, scale: 0.99 }}
+        transition={{ duration: 0.6, ease: "easeInOut" }} // Aumentado para maior suavidade
         className="bg-white w-full max-w-6xl min-h-[85vh] md:aspect-video rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] p-8 md:p-16 flex flex-col relative overflow-hidden z-10"
       >
         <div className={`absolute top-0 left-0 right-0 h-3 ${priorityStyle.badge} opacity-90`}></div>
@@ -384,10 +375,6 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
   );
 }
 
-/* ===========================
-   APP PRINCIPAL (CORRIGIDO)
-=========================== */
-
 function App() {
   const [demands, setDemands] = useState([]);
   const [filteredDemands, setFilteredDemands] = useState([]);
@@ -412,7 +399,7 @@ function App() {
     category: "this_week"
   });
 
-const fetchDemands = useCallback(async () => {
+  const fetchDemands = useCallback(async () => {
     try {
       const response = await axios.get(`${API}/demands`);
       
@@ -611,8 +598,12 @@ const fetchDemands = useCallback(async () => {
   const [isDragging, setIsDragging] = useState(false);
   const scrollIntervalRef = useRef(null);
 
-  // ===== AUTO SCROLL (CORRIGIDO) =====
-  const MAX_SCROLL_SPEED = 20;
+  const startAutoScroll = useCallback((speed) => {
+    if (scrollIntervalRef.current) clearInterval(scrollIntervalRef.current);
+    scrollIntervalRef.current = setInterval(() => {
+      window.scrollBy(0, speed);
+    }, 16);
+  }, []);
 
   const stopAutoScroll = useCallback(() => {
     if (scrollIntervalRef.current) {
@@ -620,97 +611,66 @@ const fetchDemands = useCallback(async () => {
       scrollIntervalRef.current = null;
     }
   }, []);
-  
 
-  const startAutoScroll = useCallback((speed) => {
-    if (scrollIntervalRef.current) stopAutoScroll();
-    scrollIntervalRef.current = setInterval(() => {
-      window.scrollBy(0, speed);
-    }, 16);
-  }, [stopAutoScroll]);
+  const handleGlobalDragOver = useCallback((e) => {
+    if (!isDragging) return;
 
+    const mouseY = e.clientY;
+    const viewportHeight = window.innerHeight;
+    const threshold = viewportHeight * 0.35; // Zona de sensibilidade maior para o centro
 
- const handleGlobalDragOver = useCallback((e) => {
-  if (!isDragging) return;
+    if (mouseY < threshold) {
+      const speed = -20 * (1 - mouseY / threshold);
+      startAutoScroll(speed);
+    } 
+    else if (mouseY > viewportHeight - threshold) {
+      const speed = 20 * (1 - (viewportHeight - mouseY) / threshold);
+      startAutoScroll(speed);
+    } else {
+      stopAutoScroll();
+    }
+  }, [isDragging, startAutoScroll, stopAutoScroll]);
 
-  const mouseY = e.clientY;
-  const viewportHeight = window.innerHeight;
-
-  // Ajustado para rolar mesmo quando próximo do centro
-  const threshold = viewportHeight * 0.35; 
-
-  if (mouseY < threshold) {
-    const speed = -MAX_SCROLL_SPEED * (1 - mouseY / threshold);
-    startAutoScroll(speed);
-  } 
-  else if (mouseY > viewportHeight - threshold) {
-    const speed = MAX_SCROLL_SPEED * (1 - (viewportHeight - mouseY) / threshold);
-    startAutoScroll(speed);
-  } else {
-    stopAutoScroll();
-  }
-
-}, [isDragging, startAutoScroll, stopAutoScroll]);
-
-  const handleDragStart = () => setIsDragging(true);
-  const handleDragEnd = () => {
-    setIsDragging(false);
-     stopAutoScroll();
-  };
-
-    // ===== LISTENER GLOBAL PARA AUTO SCROLL =====
-useEffect(() => {
-  if (isDragging) {
-    window.addEventListener("dragover", handleGlobalDragOver);
-  } else {
-    window.removeEventListener("dragover", handleGlobalDragOver);
-    stopAutoScroll();
-  }
-
-  return () => {
-    window.removeEventListener("dragover", handleGlobalDragOver);
-    stopAutoScroll();
-  };
-}, [isDragging, handleGlobalDragOver, stopAutoScroll]);
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener("dragover", handleGlobalDragOver);
+    } else {
+      window.removeEventListener("dragover", handleGlobalDragOver);
+      stopAutoScroll();
+    }
+    return () => {
+      window.removeEventListener("dragover", handleGlobalDragOver);
+      stopAutoScroll();
+    };
+  }, [isDragging, handleGlobalDragOver, stopAutoScroll]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-50/50" style={{ fontFamily: 'Inter, sans-serif' }}>
       <Toaster position="top-right" />
       
-{/* Header */}
-<header className="bg-[#004C97] border-b border-[#003D7A] sticky top-0 z-40 shadow-lg">
-  <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <header className="bg-[#004C97] border-b border-[#003D7A] sticky top-0 z-40 shadow-lg">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <img 
+              src="https://customer-assets.emergentagent.com/job_kanban-vendas/artifacts/dagja3ws_ChatGPT%20Image%207%20de%20fev.%20de%202026%2C%2016_51_34.png" 
+              alt="Martins Logo" 
+              className="h-12 w-auto brightness-0 invert"
+            />
+            <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Manrope, sans-serif' }}>
+              Gestão de Demandas Semanal
+            </h1>
+          </div>
 
-    {/* ESQUERDA */}
-    <div className="flex items-center gap-4">
-      <img 
-        src="https://customer-assets.emergentagent.com/job_kanban-vendas/artifacts/dagja3ws_ChatGPT%20Image%207%20de%20fev.%20de%202026%2C%2016_51_34.png" 
-        alt="Martins Logo" 
-        className="h-12 w-auto brightness-0 invert"
-      />
-      <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Manrope, sans-serif' }}>
-        Gestão de Demandas Semanal
-      </h1>
-    </div>
+          <div className="flex items-center gap-3 text-white">
+            <span className="text-lg font-semibold">Desenvolvimento de Vendas</span>
+            <span className="h-4 w-px bg-white/40"></span>
+            <span className="text-sm font-medium opacity-80 tracking-wide">
+              Semana {week} de {total}
+            </span>
+          </div>
+        </div>
+      </header>
 
-    {/* DIREITA */}
-    <div className="flex items-center gap-3 text-white">
-      <span className="text-lg font-semibold">
-        Desenvolvimento de Vendas
-      </span>
-
-      <span className="h-4 w-px bg-white/40"></span>
-
-      <span className="text-sm font-medium opacity-80 tracking-wide">
-        Semana {week} de {total}
-      </span>
-    </div>
-
-  </div>
-</header>
-
-
-      {/* Presentation Mode Modal */}
       <AnimatePresence>
         {presentationMode && (
           <PresentationMode
@@ -723,7 +683,6 @@ useEffect(() => {
         )}
       </AnimatePresence>
 
-      {/* Filters */}
       <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="bg-[#004C97] rounded-xl border border-[#003D7A] p-4 shadow-lg">
           <div className="flex flex-wrap items-center gap-6">
@@ -795,7 +754,6 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {SECTIONS.map(section => {
           const sectionDemands = getDemandsByCategory(section.id);
@@ -804,9 +762,6 @@ useEffect(() => {
             <motion.div
               key={section.id}
               layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
               className="bg-white/50 backdrop-blur-sm rounded-2xl border border-slate-200 p-6 shadow-sm"
               onDragOver={(e) => {
                 e.preventDefault();
@@ -841,33 +796,34 @@ useEffect(() => {
                 </Button>
               </div>
               
+              {/* CORREÇÃO: Removido o min-h fixo para evitar vácuo e adicionado layout do framer-motion */}
               <motion.div 
                 layout
-                className={`min-h-48 space-y-3 rounded-xl p-6 transition-all duration-300 ${
-                  dragOverCategory === section.id ? 'bg-sky-100 border-2 border-dashed border-sky-400 scale-[1.02]' : 'bg-transparent'
+                className={`transition-all duration-300 rounded-xl ${
+                  dragOverCategory === section.id ? 'bg-sky-100 p-4 border-2 border-dashed border-sky-400' : ''
                 }`}
               >
                 {sectionDemands.length === 0 ? (
-                  <div className="text-center py-16 text-slate-400">
+                  <div className="text-center py-12 text-slate-400">
                     <p className="text-sm">Nenhuma demanda nesta categoria</p>
-                    {dragOverCategory === section.id && (
-                      <p className="text-sm text-sky-600 mt-2 font-semibold">↓ Solte aqui para mover ↓</p>
-                    )}
                   </div>
                 ) : (
                   <div className="space-y-3">
                     <AnimatePresence initial={false} mode="popLayout">
                       {sectionDemands.map(demand => (
                         <DemandCard
-                          key={`${section.id}-${demand.id}`}
+                          key={demand.id} // Chave baseada puramente no ID para evitar duplicidade visual
                           demand={demand}
                           isDeleteMode={isDeleteMode}
                           selectedIds={selectedIds}
                           onToggleSelect={toggleSelect}
                           onMoveTo={handleContextMoveTo}
                           onOpenPresentation={handleOpenSinglePresentation}
-                          onDragStart={handleDragStart}
-                          onDragEnd={handleDragEnd}
+                          onDragStart={() => setIsDragging(true)}
+                          onDragEnd={() => {
+                            setIsDragging(false);
+                            stopAutoScroll();
+                          }}
                           onEdit={handleOpenEdit}
                         />
                       ))}
@@ -880,11 +836,10 @@ useEffect(() => {
         })}
       </main>
 
-      {/* Floating Action Buttons */}
       <div className="fixed bottom-8 left-8 z-[60]">
         <Button
           onClick={handleOpenCreate}
-          className="bg-sky-500 hover:bg-sky-600 text-white rounded-full px-6 py-6 shadow-lg shadow-sky-500/30 flex items-center gap-2 font-semibold transition-transform hover:scale-105 active:scale-95"
+          className="bg-sky-500 hover:bg-sky-600 text-white rounded-full px-6 py-6 shadow-lg shadow-sky-500/30 flex items-center gap-2 font-semibold transition-transform hover:scale-105"
         >
           <Plus className="w-5 h-5" />
           Criar Tema
@@ -896,7 +851,7 @@ useEffect(() => {
           <Button
             onClick={() => setIsDeleteMode(true)}
             variant="destructive"
-            className="rounded-full px-6 py-6 shadow-lg flex items-center gap-2 font-semibold transition-transform hover:scale-105 active:scale-95"
+            className="rounded-full px-6 py-6 shadow-lg flex items-center gap-2 font-semibold transition-transform hover:scale-105"
           >
             <Trash2 className="w-5 h-5" />
             Excluir Tema
@@ -909,7 +864,7 @@ useEffect(() => {
                 setSelectedIds([]);
               }}
               variant="outline"
-              className="rounded-full px-6 py-6 shadow-lg"
+              className="rounded-full px-6 py-6 shadow-lg bg-white"
             >
               Cancelar
             </Button>
@@ -926,7 +881,6 @@ useEffect(() => {
         )}
       </div>
 
-      {/* Create/Edit Demand Modal */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -940,7 +894,6 @@ useEffect(() => {
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Descreva o tema da demanda..."
               />
             </div>
 
@@ -951,7 +904,6 @@ useEffect(() => {
                 className="w-full p-2 border rounded-md text-sm min-h-[80px] focus:ring-2 focus:ring-sky-500 outline-none"
                 value={formData.observation}
                 onChange={(e) => setFormData({ ...formData, observation: e.target.value })}
-                placeholder="Detalhes adicionais sobre o tema..."
               />
             </div>
 
@@ -1041,6 +993,7 @@ useEffect(() => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
     </div>
   );
 }
