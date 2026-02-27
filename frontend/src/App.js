@@ -161,7 +161,7 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </ContextMenuTrigger>
       <ContextMenuContent className="w-56">
         <ContextMenuItem onClick={() => onEdit(demand)}>
@@ -231,11 +231,15 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] bg-slate-900/98 backdrop-blur-2xl flex items-center justify-center p-4 md:p-8"
     >
-        
-<div
-  key={currentDemand.id}
-  className="bg-white w-full max-w-6xl min-h-[85vh] md:aspect-video rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] p-8 md:p-16 flex flex-col relative overflow-hidden z-10"
->
+      <AnimatePresence mode="wait">
+<motion.div
+        key={currentDemand.id} // Chave baseada no ID para disparar animação de troca
+        initial={{ opacity: 0, x: 10, scale: 0.99 }}
+        animate={{ opacity: 1, x: 0, scale: 1 }}
+        exit={{ opacity: 0, x: -10, scale: 0.99 }}
+        transition={{ duration: 0.6, ease: "easeInOut" }} // Aumentado para maior suavidade
+        className="bg-white w-full max-w-6xl min-h-[85vh] md:aspect-video rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] p-8 md:p-16 flex flex-col relative overflow-hidden z-10"
+      >
         <div className={`absolute top-0 left-0 right-0 h-3 ${priorityStyle.badge} opacity-90`}></div>
 
         <div className="flex justify-between items-start mb-10">
@@ -367,7 +371,8 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
+      </AnimatePresence>
     </motion.div>
   );
 }
