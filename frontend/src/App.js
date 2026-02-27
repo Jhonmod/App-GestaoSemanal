@@ -114,17 +114,20 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
   return (
     <ContextMenu modal={false}>
       <ContextMenuTrigger asChild>
-        <motion.div
-          layout
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          draggable={!isDeleteMode}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          className={`bg-white p-6 rounded-xl border ${priorityStyle.border} shadow-sm hover:shadow-md transition-shadow duration-300 group relative overflow-hidden ${!isDeleteMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
-        >
+<motion.div
+  layout
+  initial={false}
+  animate={{ opacity: 1, scale: 1 }}
+  exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15 } }}
+  transition={{
+    layout: { duration: 0.25, ease: "easeOut" },
+    opacity: { duration: 0.15 }
+  }}
+  draggable={!isDeleteMode}
+  onDragStart={handleDragStart}
+  onDragEnd={handleDragEnd}
+  className={`bg-white p-6 rounded-xl border ${priorityStyle.border} shadow-sm hover:shadow-md transition-shadow duration-200 group relative overflow-hidden ${!isDeleteMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
+>
           <div className={`absolute left-0 top-0 bottom-0 w-1 ${priorityStyle.badge}`}></div>
 
           {isDeleteMode && (
