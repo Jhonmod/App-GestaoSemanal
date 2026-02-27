@@ -367,7 +367,6 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
           </div>
         </div>
       </motion.div>
-      </AnimatePresence>
     </motion.div>
   );
 }
