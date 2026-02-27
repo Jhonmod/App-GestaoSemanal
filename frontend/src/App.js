@@ -237,7 +237,7 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
         initial={{ opacity: 0, x: 10, scale: 0.99 }}
         animate={{ opacity: 1, x: 0, scale: 1 }}
         exit={{ opacity: 0, x: -10, scale: 0.99 }}
-        transition={{ duration: 0.4, ease: "easeInOut" }} // Aumentado para maior suavidade
+        transition={{ duration: 0.3, ease: "easeInOut" }} // Aumentado para maior suavidade
         className="bg-white w-full max-w-6xl min-h-[85vh] md:aspect-video rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] p-8 md:p-16 flex flex-col relative overflow-hidden z-10"
       >
         <div className={`absolute top-0 left-0 right-0 h-3 ${priorityStyle.badge} opacity-90`}></div>
