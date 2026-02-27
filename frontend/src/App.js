@@ -119,7 +119,7 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
           draggable={!isDeleteMode}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
