@@ -161,7 +161,7 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </ContextMenuTrigger>
       <ContextMenuContent className="w-56">
         <ContextMenuItem onClick={() => onEdit(demand)}>
@@ -366,7 +366,7 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
     </motion.div>
   );
 }
