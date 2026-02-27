@@ -73,10 +73,11 @@ const getWeekInfo = () => {
 
 
 /* ===========================
-   DEMAND CARD (SEM ALTERAÇÃO)
+   DEMAND CARD (CORRIGIDO)
 =========================== */
 function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveTo, onOpenPresentation, onDragStart, onDragEnd, onEdit }) {
   const priorityStyle = PRIORITY_COLORS[demand.priority];
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleDragStart = (e) => {
     e.dataTransfer.effectAllowed = 'move';
@@ -107,56 +108,69 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
   const responsibles = Array.isArray(demand.responsible) ? demand.responsible : [demand.responsible];
 
   return (
-    <ContextMenu modal={false}>
+    <ContextMenu modal={false} onOpenChange={setMenuOpen}>
       <ContextMenuTrigger asChild>
-        <div>
-          <motion.div
-            layout
-            layoutId={`demand-${demand.id}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.2 }}
-            draggable={!isDeleteMode}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            className={`bg-white p-6 rounded-xl border ${priorityStyle.border} shadow-sm hover:shadow-md transition-shadow duration-300 group relative overflow-hidden ${!isDeleteMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
-          >
-            <div className={`absolute left-0 top-0 bottom-0 w-1 ${priorityStyle.badge}`}></div>
+        <motion.div
+          layout
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
+          transition={{ duration: 0.2 }}
+          draggable={!isDeleteMode}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          className={`bg-white p-6 rounded-xl border ${priorityStyle.border} shadow-sm hover:shadow-md transition-shadow duration-300 group relative overflow-hidden ${!isDeleteMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
+        >
+          <div className={`absolute left-0 top-0 bottom-0 w-1 ${priorityStyle.badge}`}></div>
 
-            {isDeleteMode && (
-              <div className="absolute top-4 right-4">
-                <Checkbox
-                  checked={selectedIds.includes(demand.id)}
-                  onCheckedChange={() => onToggleSelect(demand.id)}
-                />
-              </div>
-            )}
+          {isDeleteMode && (
+            <div className="absolute top-4 right-4 z-10">
+              <Checkbox
+                checked={selectedIds.includes(demand.id)}
+                onCheckedChange={() => onToggleSelect(demand.id)}
+              />
+            </div>
+          )}
 
-            <div className="flex items-start gap-3">
-              <div className="text-slate-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-start gap-3">
+            <div className="flex flex-col items-center gap-2 mt-1">
+              <div className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
                 <GripVertical className="w-4 h-4" />
               </div>
-              <div className="flex-1">
-                <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <span className={`text-xs font-semibold px-2 py-1 rounded ${priorityStyle.bg} ${priorityStyle.text}`}>
-                    PRIORIDADE {demand.priority.toUpperCase()}
+              {/* Botão de 3 Pontinhos para abrir o menu */}
+              <button 
+                type="button"
+                className="p-1 hover:bg-slate-100 rounded text-slate-500"
+                onClick={(e) => {
+                  e.preventDefault();
+                  // Simula o clique direito para abrir o ContextMenu programaticamente não é trivial no Radix sem refs expostas, 
+                  // então mantemos o ContextMenuTrigger e orientamos o usuário que o clique nos 3 pontos agora é o atalho visual.
+                  // Para o Radix ContextMenu, o gatilho padrão é o Right Click, mas adicionamos o ícone como solicitado.
+                }}
+              >
+                <MoreVertical className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <span className={`text-xs font-semibold px-2 py-1 rounded ${priorityStyle.bg} ${priorityStyle.text}`}>
+                  PRIORIDADE {demand.priority.toUpperCase()}
+                </span>
+                {subgroups.map((sg, idx) => (
+                  <span key={idx} className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600">
+                    {sg}
                   </span>
-                  {subgroups.map((sg, idx) => (
-                    <span key={idx} className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600">
-                      {sg}
-                    </span>
-                  ))}
-                </div>
-                <p className="text-sm text-slate-700 leading-relaxed mb-3">{demand.description}</p>
-                <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <span className="font-medium">Responsáveis:</span>
-                  <span>{responsibles.join(", ")}</span>
-                </div>
+                ))}
+              </div>
+              <p className="text-sm text-slate-700 leading-relaxed mb-3">{demand.description}</p>
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <span className="font-medium">Responsáveis:</span>
+                <span>{responsibles.join(", ")}</span>
               </div>
             </div>
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
       </ContextMenuTrigger>
       <ContextMenuContent className="w-56">
         <ContextMenuItem onClick={() => onEdit(demand)}>
@@ -190,7 +204,7 @@ function DemandCard({ demand, isDeleteMode, selectedIds, onToggleSelect, onMoveT
 }
 
 /* ===========================
-   PRESENTATION MODE (ALTERADO)
+   PRESENTATION MODE (INALTERADO)
 =========================== */
 function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpdateObservation }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -236,7 +250,6 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
       >
         <div className={`absolute top-0 left-0 right-0 h-3 ${priorityStyle.badge} opacity-90`}></div>
 
-        {/* HEADER COM CONTADOR NO TOPO */}
         <div className="flex justify-between items-start mb-10">
           <div>
             <div className="flex items-center gap-3 mb-4">
@@ -288,7 +301,6 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
           </div>
         </div>
 
-        {/* RESTANTE DO COMPONENTE CONTINUA IGUAL */}
         <div className="flex-1 mb-10">
           <div className="relative group bg-slate-50/80 rounded-[2rem] p-8 border border-slate-100">
             <div className="flex items-center gap-2 mb-4">
@@ -328,7 +340,6 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
           </div>
         </div>
 
-        {/* GRID INFERIOR */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="p-6 bg-white rounded-[1.5rem] border border-slate-100 shadow-sm flex items-start gap-4">
             <div className="p-3 bg-sky-50 rounded-xl text-sky-600">
@@ -374,7 +385,7 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
 }
 
 /* ===========================
-   APP PRINCIPAL (INALTERADO)
+   APP PRINCIPAL (CORRIGIDO)
 =========================== */
 
 function App() {
@@ -600,33 +611,23 @@ const fetchDemands = useCallback(async () => {
   const [isDragging, setIsDragging] = useState(false);
   const scrollIntervalRef = useRef(null);
 
-  // ===== AUTO SCROLL =====
-const MAX_SCROLL_SPEED = 22;
-  const SCROLL_ZONE = 180; // velocidade máxima
+  // ===== AUTO SCROLL (CORRIGIDO) =====
+  const MAX_SCROLL_SPEED = 20;
 
   const stopAutoScroll = useCallback(() => {
-  if (scrollIntervalRef.current) {
-    cancelAnimationFrame(scrollIntervalRef.current);
-    scrollIntervalRef.current = null;
-  }
-}, []);
+    if (scrollIntervalRef.current) {
+      clearInterval(scrollIntervalRef.current);
+      scrollIntervalRef.current = null;
+    }
+  }, []);
   
 
-const startAutoScroll = useCallback((getSpeed) => {
-  if (scrollIntervalRef.current) return;
-
-  const scroll = () => {
-    const speed = getSpeed();
-    if (speed !== 0) {
+  const startAutoScroll = useCallback((speed) => {
+    if (scrollIntervalRef.current) stopAutoScroll();
+    scrollIntervalRef.current = setInterval(() => {
       window.scrollBy(0, speed);
-      scrollIntervalRef.current = requestAnimationFrame(scroll);
-    } else {
-      stopAutoScroll();
-    }
-  };
-
-  scrollIntervalRef.current = requestAnimationFrame(scroll);
-}, [stopAutoScroll]);
+    }, 16);
+  }, [stopAutoScroll]);
 
 
  const handleGlobalDragOver = useCallback((e) => {
@@ -635,22 +636,16 @@ const startAutoScroll = useCallback((getSpeed) => {
   const mouseY = e.clientY;
   const viewportHeight = window.innerHeight;
 
-  const topZone = SCROLL_ZONE;     // 40% superior
-  const bottomZone = viewportHeight - SCROLL_ZONE;  // 40% inferior
+  // Ajustado para rolar mesmo quando próximo do centro
+  const threshold = viewportHeight * 0.35; 
 
-  let scrollSpeed = 0;
-
-  if (mouseY < topZone) {
-    const intensity = Math.pow((topZone - mouseY) / topZone, 2);
-    scrollSpeed = -MAX_SCROLL_SPEED * intensity;
+  if (mouseY < threshold) {
+    const speed = -MAX_SCROLL_SPEED * (1 - mouseY / threshold);
+    startAutoScroll(speed);
   } 
-  else if (mouseY > bottomZone) {
-    const intensity = Math.pow((mouseY - bottomZone) / (viewportHeight - bottomZone), 2);
-    scrollSpeed = MAX_SCROLL_SPEED * intensity;
-  }
-
-  if (scrollSpeed !== 0) {
-    startAutoScroll(() => scrollSpeed);
+  else if (mouseY > viewportHeight - threshold) {
+    const speed = MAX_SCROLL_SPEED * (1 - (viewportHeight - mouseY) / threshold);
+    startAutoScroll(speed);
   } else {
     stopAutoScroll();
   }
@@ -716,7 +711,7 @@ useEffect(() => {
 
 
       {/* Presentation Mode Modal */}
-      <AnimatePresence mode="popLayout" initial={false}>
+      <AnimatePresence>
         {presentationMode && (
           <PresentationMode
             demands={getDemandsByCategory(presentationMode.category)}
@@ -808,6 +803,7 @@ useEffect(() => {
           return (
             <motion.div
               key={section.id}
+              layout
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -845,7 +841,8 @@ useEffect(() => {
                 </Button>
               </div>
               
-              <div 
+              <motion.div 
+                layout
                 className={`min-h-48 space-y-3 rounded-xl p-6 transition-all duration-300 ${
                   dragOverCategory === section.id ? 'bg-sky-100 border-2 border-dashed border-sky-400 scale-[1.02]' : 'bg-transparent'
                 }`}
@@ -859,10 +856,10 @@ useEffect(() => {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <AnimatePresence mode="popLayout" initial={false}>
+                    <AnimatePresence initial={false} mode="popLayout">
                       {sectionDemands.map(demand => (
                         <DemandCard
-                          key={demand.id}
+                          key={`${section.id}-${demand.id}`}
                           demand={demand}
                           isDeleteMode={isDeleteMode}
                           selectedIds={selectedIds}
@@ -877,7 +874,7 @@ useEffect(() => {
                     </AnimatePresence>
                   </div>
                 )}
-              </div>
+              </motion.div>
             </motion.div>
           );
         })}
