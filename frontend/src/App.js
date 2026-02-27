@@ -231,7 +231,7 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] bg-slate-900/98 backdrop-blur-2xl flex items-center justify-center p-4 md:p-8"
     >
-      <AnimatePresence mode="sync">
+      <AnimatePresence mode="sync" initial={false}>
 <motion.div
         key={currentDemand.id} // Chave baseada no ID para disparar animação de troca
         initial={{ opacity: 0, x: 10, scale: 0.99 }}
