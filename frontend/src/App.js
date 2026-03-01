@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+import { Plus } from "lucide-react";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -383,6 +384,9 @@ function PresentationMode({ demands, categoryTitle, onClose, singleDemand, onUpd
 function App() {
   const [demands, setDemands] = useState([]);
   const [filteredDemands, setFilteredDemands] = useState([]);
+  const [generalNotices, setGeneralNotices] = useState([]);
+  const [showGeneralNoticeModal, setShowGeneralNoticeModal] = useState(false);
+  const [generalNoticeText, setGeneralNoticeText] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingDemandId, setEditingDemandId] = useState(null);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
@@ -420,6 +424,40 @@ function App() {
       toast.error("Erro ao carregar demandas");
     }
   }, []);
+
+  // ===== Avisos Gerais - API =====
+const fetchGeneralNotices = useCallback(async () => {
+  try {
+    const res = await axios.get(`${API}/general-notices`);
+    setGeneralNotices(res.data);
+  } catch (err) {
+    toast.error("Erro ao carregar avisos gerais");
+  }
+}, []);
+
+useEffect(() => {
+  fetchGeneralNotices();
+}, [fetchGeneralNotices]);
+
+const saveGeneralNotice = async () => {
+  if (!generalNoticeText.trim()) {
+    toast.error("O aviso não pode estar vazio");
+    return;
+  }
+
+  try {
+    await axios.post(`${API}/general-notices`, {
+      text: generalNoticeText
+    });
+
+    toast.success("Aviso criado com sucesso!");
+    setGeneralNoticeText("");
+    setShowGeneralNoticeModal(false);
+    fetchGeneralNotices();
+  } catch (err) {
+    toast.error("Erro ao salvar aviso");
+  }
+};
 
   useEffect(() => {
     fetchDemands();
@@ -760,6 +798,43 @@ function App() {
       </div>
 
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+
+            {/* ================= AVISOS GERAIS ================= */}
+<motion.div
+  layout
+  className="bg-white/60 backdrop-blur-sm rounded-2xl border border-slate-200 p-6 shadow-sm"
+>
+  <div className="flex items-center justify-between mb-4">
+    <h2 className="text-xl font-semibold text-slate-900">
+      Avisos Gerais
+    </h2>
+    <Button
+      size="icon"
+      variant="ghost"
+      onClick={() => setShowGeneralNoticeModal(true)}
+    >
+      <Plus className="w-5 h-5" />
+    </Button>
+  </div>
+
+  {generalNotices.length === 0 ? (
+    <p className="text-sm text-slate-400">
+      Nenhum aviso geral adicionado.
+    </p>
+  ) : (
+    <div className="space-y-3">
+      {generalNotices.map(notice => (
+        <div
+          key={notice.id}
+          className="bg-sky-50 border border-sky-200 rounded-xl px-4 py-3 text-slate-800 font-semibold"
+        >
+          {notice.text}
+        </div>
+      ))}
+    </div>
+  )}
+</motion.div>
+
         {SECTIONS.map(section => {
           const sectionDemands = getDemandsByCategory(section.id);
           
@@ -998,7 +1073,32 @@ function App() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+      <Dialog open={showGeneralNoticeModal} onOpenChange={setShowGeneralNoticeModal}>
+  <DialogContent className="sm:max-w-lg">
+    <DialogHeader>
+      <DialogTitle>Novo Aviso Geral</DialogTitle>
+    </DialogHeader>
+
+    <div className="py-4">
+      <textarea
+        className="w-full p-6 bg-white border-2 border-sky-100 rounded-2xl text-lg text-slate-700 outline-none min-h-[150px]"
+        value={generalNoticeText}
+        onChange={(e) => setGeneralNoticeText(e.target.value)}
+        placeholder="Digite o aviso geral..."
+      />
+    </div>
+
+    <DialogFooter>
+      <Button variant="outline" onClick={() => setShowGeneralNoticeModal(false)}>
+        Cancelar
+      </Button>
+      <Button onClick={saveGeneralNotice} className="bg-sky-600 hover:bg-sky-700">
+        Salvar
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+          
     </div>
   );
 }
