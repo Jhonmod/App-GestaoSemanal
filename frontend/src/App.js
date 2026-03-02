@@ -586,23 +586,34 @@ const saveGeneralNotice = async () => {
     });
   };
 
-  const deleteSelected = async () => {
-    if (selectedIds.length === 0) {
-      toast.error("Selecione pelo menos uma demanda");
-      return;
+const deleteSelected = async () => {
+  if (selectedIds.length === 0) {
+    toast.error("Selecione pelo menos um item");
+    return;
+  }
+
+  const demandIds = selectedIds.filter(id => id.startsWith("DMD-"));
+  const noticeIds = selectedIds.filter(id => id.startsWith("NOTICE-"));
+
+  try {
+    if (demandIds.length > 0) {
+      await axios.post(`${API}/demands/bulk-delete`, { ids: demandIds });
     }
-    
-    try {
-      await axios.post(`${API}/demands/bulk-delete`, { ids: selectedIds });
-      toast.success(`${selectedIds.length} demanda(s) excluída(s) com sucesso!`);
-      setSelectedIds([]);
-      setIsDeleteMode(false);
-      fetchDemands();
-    } catch (error) {
-      console.error("Error deleting demands:", error);
-      toast.error("Erro ao excluir demandas");
+
+    if (noticeIds.length > 0) {
+      await axios.post(`${API}/general-notices/bulk-delete`, { ids: noticeIds });
     }
-  };
+
+    toast.success(`${selectedIds.length} item(ns) excluído(s) com sucesso!`);
+    setSelectedIds([]);
+    setIsDeleteMode(false);
+    fetchDemands();
+    fetchGeneralNotices();
+  } catch (error) {
+    console.error("Error deleting items:", error);
+    toast.error("Erro ao excluir itens");
+  }
+};
 
   const toggleSelect = (id) => {
     setSelectedIds(prev => 
@@ -693,11 +704,6 @@ const saveGeneralNotice = async () => {
       <header className="bg-[#004C97] border-b border-[#003D7A] sticky top-0 z-40 shadow-lg">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img 
-              src="https://customer-assets.emergentagent.com/job_kanban-vendas/artifacts/dagja3ws_ChatGPT%20Image%207%20de%20fev.%20de%202026%2C%2016_51_34.png" 
-              alt="Martins Logo" 
-              className="h-12 w-auto brightness-0 invert"
-            />
             <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Manrope, sans-serif' }}>
               Gestão de Demandas Semanal
             </h1>
@@ -822,14 +828,23 @@ const saveGeneralNotice = async () => {
     </p>
   ) : (
     <div className="space-y-3">
-      {generalNotices.map(notice => (
-        <div
-          key={notice.id}
-          className="bg-sky-50 border border-sky-200 rounded-xl px-4 py-3 text-slate-800 font-semibold"
-        >
-          {notice.text}
-        </div>
-      ))}
+{generalNotices.map(notice => (
+  <div
+    key={notice.id}
+    className="relative bg-sky-50 border border-sky-200 rounded-xl px-4 py-3 text-slate-800 font-semibold"
+  >
+    {isDeleteMode && (
+      <div className="absolute top-3 right-3 z-10">
+        <Checkbox
+          checked={selectedIds.includes(notice.id)}
+          onCheckedChange={() => toggleSelect(notice.id)}
+        />
+      </div>
+    )}
+
+    {notice.text}
+  </div>
+))}
     </div>
   )}
 </motion.div>
