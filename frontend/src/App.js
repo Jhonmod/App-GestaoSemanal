@@ -525,27 +525,40 @@ const saveGeneralNotice = async () => {
     return v;
   };
 
-  const saveDemand = async () => {
-    if (!formData.description || formData.responsible.length === 0 || formData.subgroup.length === 0) {
-      toast.error("Preencha todos os campos obrigatórios (incluindo responsáveis e sub-grupos)");
-      return;
+const saveDemand = async () => {
+  if (!formData.description || formData.responsible.length === 0 || formData.subgroup.length === 0) {
+    toast.error("Preencha todos os campos obrigatórios (incluindo responsáveis e sub-grupos)");
+    return;
+  }
+
+  let success = false;
+
+  try {
+    if (editingDemandId) {
+      await axios.put(`${API}/demands/${editingDemandId}`, formData);
+      toast.success("Demanda atualizada com sucesso!");
+    } else {
+      await axios.post(`${API}/demands`, formData);
+      toast.success("Demanda criada com sucesso!");
     }
-    
+
+    success = true;
+  } catch (error) {
+    console.error("Error saving demand (request):", error);
+    toast.error("Erro ao salvar demanda");
+    return;
+  }
+
+  if (success) {
     try {
-      if (editingDemandId) {
-        await axios.put(`${API}/demands/${editingDemandId}`, formData);
-        toast.success("Demanda atualizada com sucesso!");
-      } else {
-        await axios.post(`${API}/demands`, formData);
-        toast.success("Demanda criada com sucesso!");
-      }
       setShowCreateModal(false);
-      fetchDemands();
-    } catch (error) {
-      console.error("Error saving demand:", error);
-      toast.error("Erro ao salvar demanda");
+      setEditingDemandId(null);
+      await fetchDemands();
+    } catch (uiError) {
+      console.warn("Erro pós-salvamento (UI):", uiError);
     }
-  };
+  }
+};
 
   const updateObservationInline = async (demandId, newObs) => {
     try {
