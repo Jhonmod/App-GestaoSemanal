@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
@@ -79,6 +79,14 @@ class GeneralNotice(BaseModel):
 
 api_router = APIRouter(prefix="/api")
 
+# ================= PRE-FLIGHT CORS (CORREÇÃO) =================
+
+@api_router.options("/demands")
+async def options_demands():
+    return Response(status_code=200)
+
+# ================= HEALTH =================
+
 @app.get("/")
 async def health():
     return {"status": "ok"}
@@ -96,6 +104,7 @@ async def create_demand(demand: DemandCreate):
     demand_id = f"DMD-{count + 1:04d}"
 
     data = demand.model_dump()
+
     if isinstance(data["responsible"], list):
         data["responsible"] = ", ".join(data["responsible"])
     if isinstance(data["subgroup"], list):
