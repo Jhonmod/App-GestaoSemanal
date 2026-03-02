@@ -1,22 +1,21 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Response
+from fastapi import FastAPI, APIRouter, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
-import os
-import logging
 from pydantic import BaseModel
 from typing import List, Union, Optional
 from datetime import datetime, timezone
+import os
+import uuid
+import logging
+
+# ================= LOG =================
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("API")
 
-app = FastAPI()
+# ================= APP =================
 
-origins = [
-    "https://app-gestao-semanal-2wc9.vercel.app",
-    "http://localhost:3000",
-    "https://app-gestaosemanal-1.onrender.com",
-]
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
@@ -29,12 +28,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ================= DATABASE =================
+
 mongo_url = os.environ.get("MONGO_URI")
 db_name = os.environ.get("DB_NAME", "test_db")
+
 client = AsyncIOMotorClient(mongo_url)
 db = client[db_name]
 
-# ================= MODELOS =================
+# ================= MODELS =================
+
+class DemandCreate(BaseModel):
+    description: str
+    priority: str
+    responsible: Union[List[str], str]
+    subgroup: Union[List[str], str]
+    category: str = "this_week"
+    observation: Optional[str] = ""
+    deliveryDate: Optional[str] = ""
 
 class DemandUpdate(BaseModel):
     description: Optional[str] = None
@@ -44,15 +55,6 @@ class DemandUpdate(BaseModel):
     category: Optional[str] = None
     observation: Optional[str] = None
     deliveryDate: Optional[str] = None
-
-class DemandCreate(BaseModel):
-    description: str
-    priority: str
-    responsible: Union[List[str], str]
-    subgroup: Union[List[str], str]
-    category: str = "this_week"
-    observation: Optional[str] = ""
-    deliveryDate: str
 
 class Demand(BaseModel):
     id: str
@@ -69,8 +71,6 @@ class Demand(BaseModel):
 class BulkDeleteRequest(BaseModel):
     ids: List[str]
 
-# ===== Avisos Gerais =====
-
 class GeneralNoticeCreate(BaseModel):
     text: str
 
@@ -79,13 +79,9 @@ class GeneralNotice(BaseModel):
     text: str
     created_at: str
 
-api_router = APIRouter(prefix="/api")
+# ================= ROUTER =================
 
-# ================= PRE-FLIGHT CORS (CORREÇÃO) =================
-
-@api_router.options("/demands")
-async def options_demands():
-    return Response(status_code=200)
+api = APIRouter(prefix="/api")
 
 # ================= HEALTH =================
 
@@ -95,15 +91,13 @@ async def health():
 
 # ================= DEMANDS =================
 
-@api_router.get("/demands", response_model=List[Demand])
+@api.get("/demands", response_model=List[Demand])
 async def get_demands():
     return await db.demands.find({}, {"_id": 0}).to_list(1000)
 
-@api_router.post("/demands")
+@api.post("/demands", status_code=201)
 async def create_demand(demand: DemandCreate):
     now = datetime.now(timezone.utc).isoformat()
-    count = await db.demands.count_documents({})
-    demand_id = f"DMD-{count + 1:04d}"
 
     data = demand.model_dump()
 
@@ -112,6 +106,8 @@ async def create_demand(demand: DemandCreate):
     if isinstance(data["subgroup"], list):
         data["subgroup"] = ", ".join(data["subgroup"])
 
+    demand_id = f"DMD-{uuid.uuid4().hex[:8].upper()}"
+
     data.update({
         "id": demand_id,
         "created_at": now,
@@ -119,9 +115,13 @@ async def create_demand(demand: DemandCreate):
     })
 
     await db.demands.insert_one(data)
-    return data
 
-@api_router.put("/demands/{demand_id}")
+    return {
+        "success": True,
+        "id": demand_id
+    }
+
+@api.put("/demands/{demand_id}")
 async def update_demand(demand_id: str, update: DemandUpdate):
     update_data = {k: v for k, v in update.model_dump().items() if v is not None}
 
@@ -136,24 +136,23 @@ async def update_demand(demand_id: str, update: DemandUpdate):
     if result.matched_count == 0:
         raise HTTPException(404, "Demanda não encontrada")
 
-    return {"status": "ok"}
+    return {"success": True}
 
-@api_router.post("/demands/bulk-delete")
+@api.post("/demands/bulk-delete")
 async def bulk_delete_demands(req: BulkDeleteRequest):
     result = await db.demands.delete_many({"id": {"$in": req.ids}})
     return {"deleted": result.deleted_count}
 
-# ================= AVISOS GERAIS =================
+# ================= GENERAL NOTICES =================
 
-@api_router.get("/general-notices", response_model=List[GeneralNotice])
+@api.get("/general-notices", response_model=List[GeneralNotice])
 async def get_general_notices():
     return await db.general_notices.find({}, {"_id": 0}).to_list(1000)
 
-@api_router.post("/general-notices", response_model=GeneralNotice)
+@api.post("/general-notices", status_code=201)
 async def create_general_notice(data: GeneralNoticeCreate):
     now = datetime.now(timezone.utc).isoformat()
-    count = await db.general_notices.count_documents({})
-    notice_id = f"NOTICE-{count + 1:04d}"
+    notice_id = f"NOTICE-{uuid.uuid4().hex[:8].upper()}"
 
     notice = {
         "id": notice_id,
@@ -162,11 +161,17 @@ async def create_general_notice(data: GeneralNoticeCreate):
     }
 
     await db.general_notices.insert_one(notice)
-    return notice
 
-@api_router.post("/general-notices/bulk-delete")
+    return {
+        "success": True,
+        "id": notice_id
+    }
+
+@api.post("/general-notices/bulk-delete")
 async def delete_general_notices(req: BulkDeleteRequest):
     result = await db.general_notices.delete_many({"id": {"$in": req.ids}})
     return {"deleted": result.deleted_count}
 
-app.include_router(api_router)
+# ================= REGISTER ROUTER =================
+
+app.include_router(api)
