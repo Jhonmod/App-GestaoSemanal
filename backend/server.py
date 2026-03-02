@@ -14,7 +14,8 @@ app = FastAPI()
 
 origins = [
     "https://app-gestao-semanal-2wc9.vercel.app",
-    "http://localhost:3000"
+    "http://localhost:3000",
+    "https://app-gestaosemanal-1.onrender.com",
 ]
 
 app.add_middleware(
