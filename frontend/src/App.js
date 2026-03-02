@@ -33,7 +33,7 @@ const SUBGROUPS = [
   "Gestão de territórios",
   "BI Analytics",
   "Setor Autônomos",
-  "Agendas e Incentivos",
+  "Incentivos e ganhos variáveis",
   "Help Desk",
   "Coordenação",
   "Treinamentos"
