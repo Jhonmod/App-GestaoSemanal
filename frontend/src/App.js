@@ -42,7 +42,7 @@ const SUBGROUPS = [
 const RESPONSIBLES_LIST = [
   "Alisson", "Jhonatas", "Maria Clara", "Isabela", "Bianca", "Eduardo",
   "Vinicius Fontes", "Vinicius Rodovalho", "Jacyara", "Leandro",
-  "Marcelo", "Nathalia", "Felipe"
+  "Marcelo", "Nathalia", "Felipe", "Vitor Hugo", "Esther"
 ];
 
 const SECTIONS = [
